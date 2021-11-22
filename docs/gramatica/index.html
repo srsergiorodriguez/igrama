@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Igrama - gramática</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="../lib/simplify.js"></script>
+    <script src="../common.js"></script> 
+    <script src="sketch.js"></script>   
+    <link href="../style.css" rel="stylesheet"> 
+    <style>
+      .adjustable-section {
+        position: absolute;
+        border: dashed #429bf5 3px;
+        user-select: none;
+        cursor: crosshair;
+      }
+
+      .non-adjustable-section {
+        position: absolute;
+        border: solid 1px grey;
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="general">
+      <div id="chalkboard">
+        <div id="canvas"></div>
+        <div id="overlay"></div>
+      </div>
+      <div id="gui">
+        <div>
+          <h1 class="app-title">igrama</h1>
+          <h2 class="app-subtitle">Gramática</h2>
+        </div>
+      </div>
+    </div>
+    <footer>v1.0.0 por Sergio Rodríguez Gómez</footer>
+  </body>
+</html>
