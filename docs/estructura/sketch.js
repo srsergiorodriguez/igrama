@@ -236,6 +236,7 @@ function updateAdjust() {
 		const {x, y, w, h} = sectionsData[i];
 		const offsetX = mouseX - x;
 		const offsetY = mouseY - y;
+		console.log(touches);
 
 		if ( offsetX >= w - 20 && offsetY >= h - 20) {
 			// JALANDO DE LA ESQUINA
@@ -267,7 +268,7 @@ function updateAdjust() {
 		}
 	}
 
-	section.mousePressed(adjustAction).touchStarted(adjustAction);
+	section.mousePressed(adjustAction);
 }
 
 function sectionNamesPrompt(callback) {
