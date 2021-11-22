@@ -267,7 +267,7 @@ function updateAdjust() {
 		}
 	}
 
-	section.mousePressed(adjustAction);
+	section.mousePressed(adjustAction).touchStarted(adjustAction);
 }
 
 function sectionNamesPrompt(callback) {

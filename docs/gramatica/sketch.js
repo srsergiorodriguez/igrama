@@ -185,7 +185,8 @@ function gui() {
 
 function updateDoodles() {
 	let interval;
-	const section = select('.adjustable-section').mousePressed(() => {
+
+	const doodleAction = () => {
 		const doodle = [];
 		interval = setInterval(() => {
 			if (checkLimits(section)) {
@@ -212,7 +213,8 @@ function updateDoodles() {
 				drawLayers(layers);
 			};
 		}, 10);
-	});
+	};
+	const section = select('.adjustable-section').mousePressed(doodleAction).touchStarted(doodleAction);
 }
 
 function drawLayers(layers) {
