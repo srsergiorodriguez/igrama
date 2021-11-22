@@ -14,6 +14,7 @@
   box-sizing: border-box;
   margin: 0px;
   padding: 0px;
+  touch-action: none;
 }
 
 h1, h2 {
@@ -50,6 +51,7 @@ footer {
   width: 680px;
   height: 680px;
   border: solid 10px var(--frame);
+  user-select: none;
 }
 
 #overlay {
@@ -58,6 +60,7 @@ footer {
   height: 100%;
   left: 0px;
   top: 0px;
+  user-select: none;
 }
 
 #text-overlay {
