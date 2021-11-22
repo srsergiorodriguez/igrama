@@ -156,7 +156,7 @@ function getModel() {
 }
 
 function updateSketch() {
-	select('#overlay').mousePressed(function() {
+	const sketchAction = () => {
 		const doodle = [];
 		if (drawingSketch === true) {
 			let interval = setInterval(() => {
@@ -179,7 +179,9 @@ function updateSketch() {
 				}
 			}, 10);
 		}
-	});
+	};
+
+	select('#overlay').mousePressed(sketchAction).touchStarted(sketchAction);
 }
 
 function showSections(i) {
@@ -230,7 +232,7 @@ function updateAdjust() {
 	const section = select('.adjustable-section');
 	const i = section.attribute('i');
 
-	section.mousePressed(() => {
+	const adjustAction = () => {
 		const {x, y, w, h} = sectionsData[i];
 		const offsetX = mouseX - x;
 		const offsetY = mouseY - y;
@@ -263,7 +265,9 @@ function updateAdjust() {
 				if (!mouseIsPressed) {clearInterval(interval)}
 			}, 100);			
 		}
-	});
+	}
+
+	section.mousePressed(adjustAction);
 }
 
 function sectionNamesPrompt(callback) {
