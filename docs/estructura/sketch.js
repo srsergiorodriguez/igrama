@@ -230,19 +230,28 @@ function showAdjustableSection(i) {
 function updateAdjust() {
 	let interval;
 	const section = select('.adjustable-section');
+	const corner = select('.corner');
+	let isCorner = false;
 	const i = section.attribute('i');
+	let fixedX;
+	let fixedY;
+	let movedX;
+	let movedY;
 
-	const adjustAction = () => {
+	const adjustAction = (e) => {
 		const {x, y, w, h} = sectionsData[i];
-		const offsetX = mouseX - x;
-		const offsetY = mouseY - y;
-		console.log(touches);
+		let refX = e === undefined ? mouseX : fixedX;
+		let refY = e === undefined ? mouseY : fixedY;
+		const offsetX = refX - x;
+		const offsetY = refY - y;
 
-		if ( offsetX >= w - 20 && offsetY >= h - 20) {
+		if (offsetX >= w - 20 && offsetY >= h - 20 || isCorner) {
 			// JALANDO DE LA ESQUINA
 			interval = setInterval(() => {
-				let newW = mouseX - x;
-				let newH = mouseY - y;
+				refX = e === undefined ? mouseX : movedX;
+				refY = e === undefined ? mouseY : movedY;	
+				let newW = refX - x;
+				let newH = refY - y;
 				newW = newW + x >= s ? s - x : newW;
 				newH = newH + y >= s ? s - y : newH;
 				sectionsData[i].w = newW;
@@ -254,8 +263,10 @@ function updateAdjust() {
 		} else {
 			// MOVIENDO
 			interval = setInterval(() => {
-				let newX = mouseX - offsetX;
-				let newY = mouseY - offsetY;
+				refX = e === undefined ? mouseX : movedX;
+				refY = e === undefined ? mouseY : movedY;					
+				let newX = refX - offsetX;
+				let newY = refY - offsetY;
 				// Mantener nueva posición dentro de los límites del canvas
 				newX = newX < 0 ? 0 : newX > s - w ? s - w : newX;
 				newY = newY < 0 ? 0 : newY > s - h ? s - h : newY;
@@ -264,11 +275,26 @@ function updateAdjust() {
 				section.style('left', sectionsData[i].x + 'px');
 				section.style('top', sectionsData[i].y + 'px');
 				if (!mouseIsPressed) {clearInterval(interval)}
-			}, 100);			
+			}, 100);
 		}
 	}
 
-	section.mousePressed(adjustAction);
+	section.mousePressed(function() {
+		adjustAction();
+	}).touchStarted(function(e) {
+		fixedX = e.touches[0].pageX;
+		fixedY = e.touches[0].pageY;
+		adjustAction(e);
+	}).touchMoved(function(e) {
+		movedX = e.touches[0].pageX;
+		movedY = e.touches[0].pageY;
+	});
+
+	corner.touchStarted(function(){
+		isCorner = true;
+	}).touchEnded(()=>{
+		isCorner = false;
+	})
 }
 
 function sectionNamesPrompt(callback) {

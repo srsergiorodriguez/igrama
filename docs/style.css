@@ -16,10 +16,6 @@
   padding: 0px;
 }
 
-canvas {
-  touch-action: none;
-}
-
 h1, h2 {
   text-align: center;
   margin: 10px;
@@ -44,6 +40,7 @@ footer {
   display: flex;
   margin: auto;
   justify-content: center;
+  touch-action: none;
 }
 
 /* chalkboard */
@@ -55,7 +52,9 @@ footer {
   height: 680px;
   border: solid 10px var(--frame);
   user-select: none;
-  touch-action: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
 }
 
 #overlay {
@@ -65,7 +64,9 @@ footer {
   left: 0px;
   top: 0px;
   user-select: none;
-  touch-action: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
 }
 
 #text-overlay {
