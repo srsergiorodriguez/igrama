@@ -40,7 +40,6 @@ footer {
   display: flex;
   margin: auto;
   justify-content: center;
-  touch-action: none;
 }
 
 /* chalkboard */
@@ -55,6 +54,7 @@ footer {
   -moz-user-select: none;
   -webkit-user-select: none;
   -ms-user-select: none;
+  touch-action: none;
 }
 
 #overlay {
@@ -67,6 +67,7 @@ footer {
   -moz-user-select: none;
   -webkit-user-select: none;
   -ms-user-select: none;
+  touch-action: none;
 }
 
 #text-overlay {
@@ -79,6 +80,7 @@ footer {
   color: black;
   font-size: 20px;
   background: white;
+  touch-action: none;
 }
 
 /* gui */
@@ -87,7 +89,6 @@ footer {
   background: var(--toolbar);
   border: none;
   width: 170px;
-  touch-action: none;
 }
 
 .gui-container {
