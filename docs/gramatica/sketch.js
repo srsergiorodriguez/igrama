@@ -1,17 +1,24 @@
 let s; // Size of canvas
 let cnv; // canvas
+
 let sectionsN; // Number of sections
 let sectionsNames; // Names of sections
-let attributes; // Booleans about sections requiring attributes
-let sketch = []; // Guide drawing
 let sectionsData = []; // Position and size of sections
-const layersData = []; // Contains all drawings
-const attributesData = [];
-const layers = []; // Contains current drawing
-const undoStacks = [];
-let withAttributes = false;
 
+let attributes; // Booleans about sections requiring attributes
+const attributesData = [];
+
+let sketch = []; // Guide drawing
+
+const layers = []; // Contains current drawing
+const layersData = []; // Contains all drawings
+const undoStacks = [];
 /*
+
+LAYER -- DATOS DEL DIBUJO CON VECTOR
+SECTION -- ESPACIO DONDE PUEDE DIBUJARSE (PARA HACER UNA LAYER)
+SKETCH -- DIBUJO DE REFERENCIA QUE ESTÁ POR DEBAJO DE TODO
+
 layersData
 capa1: layer
 capa2: drawing
@@ -25,18 +32,8 @@ let currentWeight = 4;
 const maxWeight = 50;
 let currentColor = '#000000';
 
-/*
-OPTIONS TO SELECT BASEMODELS [ ]
-
-LAYER -- DATOS DEL DIBUJO CON VECTOR
-SECTION -- ESPACIO DONDE PUEDE DIBUJARSE (PARA HACER UNA LAYER)
-SKETCH -- DIBUJO DE REFERENCIA QUE ESTÁ POR DEBAJO DE TODO
-
-PONER TEXTOS EN LOS DIBUJOS [ ]
-FUSIONAR GRAMATICAS CON EL MISMO MODELO [ ]
-*/
-
 async function setup() {
+	select('footer').html(`${version} por Sergio Rodríguez Gómez`);
 	s = +select('#chalkboard').style('width').replace('px','');
 	select('#overlay').style('width', s+'px').style('height', s+'px');
 	cnv = createCanvas(s, s).parent('#canvas');
@@ -106,21 +103,23 @@ function gui() {
 	// ACTIONS & TOOLS
 	const actionsDiv = createDiv('').class('actions-container').parent(guiCont);
 
-	createButton('Deshacer').class('action-btn').parent(actionsDiv).mouseClicked(() => {
+	const emojiBtns = createDiv('').class('emoji-btns-container').parent(actionsDiv);
+
+	createButton('↩️').class('action-btn').addClass('emoji-btn').parent(emojiBtns).mouseClicked(() => {
 		const i = +select('.adjustable-section').attribute('i');
 		if (layers[i].length <= 0) return
 		undoStacks[i].push(layers[i].pop());
 		drawLayers(layers);
 	});
 
-	createButton('Rehacer').class('action-btn').parent(actionsDiv).mouseClicked(() => {
+	createButton('↪️').class('action-btn').addClass('emoji-btn').parent(emojiBtns).mouseClicked(() => {
 		const i = +select('.adjustable-section').attribute('i');
 		if (undoStacks[i].length <= 0) return
 		layers[i].push(undoStacks[i].pop());
 		drawLayers(layers);
 	});
 
-	createButton('Borrar').class('action-btn').parent(actionsDiv).mouseClicked(() => {
+	createButton('💣').class('action-btn').addClass('emoji-btn').parent(emojiBtns).mouseClicked(() => {
 		layers[+select('.adjustable-section').attribute('i')] = [];
 		drawLayers(layers);
 	});
@@ -151,6 +150,9 @@ function gui() {
 	createButton('Exportar gramática').class('action-btn').parent(actionsDiv).mouseClicked(() => {
 		const grammar = getGrammar();
 		saveJSON(grammar, 'igrama');
+		const grammarCodified = btoa(JSON.stringify(grammar, null, 2));
+		const dataUrl = encodeToImage(grammarCodified, layersData);
+		createImg(dataUrl, "").class('coded-miniature').parent(guiCont);
 	});
 
 	createButton('>>>').class('action-btn').parent(actionsDiv).mouseClicked(() => {
@@ -306,17 +308,15 @@ function getGrammar() {
 	capa3: doodle
 	capa4: v: x,y
 
-	coding: hex & weight & vx,vy... ** hex & weight & vx,vy... %% attribute
+	coding: hex & weight & vx,vy... ** hex & weight & vx,vy... (%% drawingDelimiter) attribute
 	*/
 	const baseBranches = [];
 	for (let i = 0; i < sectionsN; i++) {
 		baseBranches.push(`<${sectionsNames ? sectionsNames[i] : i}>`);
-		// modelData.grammar[sectionsNames ? sectionsNames[i] : i] = layersData[i].map(drawing => drawing.map(doodle => `${doodle.color}&${doodle.weight}&${doodle.toString()}`).join('**')).join('%%');
-		// modelData.grammar[sectionsNames ? sectionsNames[i] : i] = layersData[i].map(drawing => drawing.map(doodle => `${doodle.color}&${doodle.weight}&${doodle.toString()}`));
+		// FOR EACH DRAWING
 		modelData.grammar[sectionsNames ? sectionsNames[i] : i] = layersData[i].map(drawing => {
-			// FOR EACH DRAWING
 			const vector = drawing.map(doodle => `${doodle.color}&${doodle.weight}&${doodle.toString()}`).join('**');
-			const vectorAndAttribute = `${vector}%%${drawing.attribute}`;
+			const vectorAndAttribute = `vector${drawingDelimiter}${vector}${drawingDelimiter}${drawing.attribute}`;
 			return vectorAndAttribute
 		});
 	}

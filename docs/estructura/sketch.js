@@ -10,6 +10,7 @@ let sectionsData = [];
 let drawingSketch = true;
 
 function setup() {
+	select('footer').html(`${version} por Sergio Rodríguez Gómez`);
 	s = +select('#chalkboard').style('width').replace('px','');
 	select('#overlay').style('width', s+'px').style('height', s+'px');
 	cnv = createCanvas(s, s).parent('#canvas');
@@ -17,7 +18,6 @@ function setup() {
 	background(255);
 
 	const newStructureDiv = createDiv('').class('new-struct').parent('#gui');
-
 	createP('Escoge el número de secciones:').class('info').parent(newStructureDiv);
 	const sectionSelector = createSelect().class('select').parent(newStructureDiv).changed(() => {
 		sectionsN = +sectionSelector.value();
@@ -34,6 +34,7 @@ function setup() {
 		if (file.subtype === 'json') {
 			sectionsN = file.data.metadata.sectionsN;
 			sectionsData = file.data.sections;
+			attributes = [];
 			sketch = decodeSketch(file.data.sketch);
 			newStructureDiv.remove();
 			gui();
@@ -41,6 +42,19 @@ function setup() {
 			alert("El archivo no es compatible");
 		}
 	});
+}
+
+function getModel() {
+	const modelData = {
+		metadata: {
+			sectionsN,
+			sectionsNames,
+			attributes
+		},
+		sections: sectionsData,
+		sketch: btoa(sketch.map(doodle => doodle.toString()).join('**'))
+	};
+	return modelData
 }
 
 function randomSections() {
@@ -141,20 +155,6 @@ function gui() {
 	select('.guide').addClass('selected');
 }
 
-
-function getModel() {
-	const modelData = {
-		metadata: {
-			sectionsN,
-			sectionsNames,
-			attributes
-		},
-		sections: sectionsData,
-		sketch: btoa(sketch.map(doodle => doodle.toString()).join('**'))
-	};
-	return modelData
-}
-
 function updateSketch() {
 	const sketchAction = () => {
 		const doodle = [];
@@ -211,8 +211,6 @@ function showNonAdjustableSection(i) {
 }
 
 function showAdjustableSection(i) {
-	selectAll('.adjustable-section').forEach(d=>d.remove());
-
 	const section = createDiv(i)
 		.class('adjustable-section')
 		.attribute('i', i)
@@ -231,7 +229,6 @@ function updateAdjust() {
 	let interval;
 	const section = select('.adjustable-section');
 	const corner = select('.corner');
-	let isCorner = false;
 	const i = section.attribute('i');
 	let fixedX;
 	let fixedY;
@@ -290,6 +287,7 @@ function updateAdjust() {
 		movedY = e.touches[0].pageY;
 	});
 
+	let isCorner = false;
 	corner.touchStarted(function(){
 		isCorner = true;
 	}).touchEnded(()=>{
@@ -306,7 +304,7 @@ function sectionNamesPrompt(callback) {
 
 	const inputs = [];
 	const attr = [];
-	for (let i = 0; i < sectionsN; i++) {
+	for (let i = sectionsN - 1; i >= 0; i--) {
 		const cont = createDiv('').class('multiprompt-line').parent(multiPrompt);
 		createSpan(`Sección ${i}:`).parent(cont);
 		inputs[i] = createInput(i).parent(cont).attribute("maxlength", 20);
@@ -325,7 +323,7 @@ function sectionNamesPrompt(callback) {
 	createButton('Cancelar').class('alert-btn').parent(btnDiv).mouseClicked(function() {
 		multiPrompt.remove();
 	});
-	createButton('Continuar').class('alert-btn').parent(btnDiv).mouseClicked(function() {
+	createButton('Continuar').class('alert-btn').parent(btnDiv).mouseClicked(async function() {
 		for (let i = 0; i < sectionsN; i++) {
 			sectionsNames[i] = inputs[i].value().replace(" ","_");
 			attributes[i] = attr[i].checked();
@@ -333,13 +331,15 @@ function sectionNamesPrompt(callback) {
 				let {x, y, w, h} = sectionsData[i];
 				const im = get(x, y, w, h);
 				im.resize(im.width * 3, im.height * 3);
-				save(im, `sec_${sectionsNames[i]}.png`);
+				im.save(`sec_${sectionsNames[i]}`, 'png');
+				await sleep(300);
 			}
 		};
 		if (template) {
 			const im = get();
 			im.resize(im.width * 3, im.height * 3);
-			save(im, `cnv.png`);
+			im.save('cnv', 'png');
+			await sleep(300)
 		}
 		callback();
 		multiPrompt.remove();

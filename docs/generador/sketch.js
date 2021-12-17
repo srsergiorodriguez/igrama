@@ -12,20 +12,14 @@ let aventura;
 let squigInterval;
 
 const frameDelay = 350;
-/*
-layersData
-capa1: layer
-capa2: dibujo
-capa3: doodle
-capa4: v: x,y
-
-coding: hex & weight & vx,vy... ** hex & weight & vx,vy...
-*/
 
 let currentWeight = 4;
 let currentColor = '#000000';
 
+const imgsMemo = {};
+
 async function setup() {
+	select('footer').html(`${version} por Sergio Rodríguez Gómez`);
 	s = +select('#chalkboard').style('width').replace('px','');
 	cnv = createCanvas(s, s).parent('#canvas');
 	background(255);
@@ -39,17 +33,17 @@ async function setup() {
 		file = await JSON.parse(atob(localStorage.getItem('igramaModel')));
 		newStructureDiv.remove();
 		start(file);
-	} else {
-		// file = await (await fetch('./modelos/igrama0.json')).json();
-		// newStructureDiv.remove();
-		// start(file);
 	}
 
-	select('#gui').drop((f) => {
+	select('#gui').drop(async (f) => {
 		if (f.subtype === 'json') {
-			const file = f.data;
+			const data = f.data;
 			newStructureDiv.remove();
-			start(file);
+			start(data);
+		} else if (f.subtype === 'png') {
+			const dataUrl = f.data;
+			const data = await decodeImage(dataUrl);
+			start(data);
 		} else {
 			alert("El archivo no es compatible");
 		}
@@ -118,21 +112,29 @@ function gui() {
 	});
 }
 
-function drawLayers(layers) {
+async function drawLayers(layers) {
 	background(255);
 	noFill();
-	for (let layer of layers) {
-		for (let doodle of layer) {
-			if (doodle.length === 0) continue
-			stroke(doodle.color);
-			strokeWeight(doodle.weight);
-			beginShape();
-			curveVertex(doodle[0][0],doodle[0][1]);
-			for (let v of doodle) {
-				curveVertex(v[0],v[1]);
+	for (let [index, layer] of layers.entries()) {
+		const {w, h, x, y} = sectionsData[index];
+		if (layer.type === 'url') {
+			if (imgsMemo[layer.url] === undefined) {
+				imgsMemo[layer.url] = await new Promise(resolve => {loadImage(layer.url, d => {resolve(d)})});
 			}
-			curveVertex(doodle[doodle.length-1][0],doodle[doodle.length-1][1]);
-			endShape();
+			image(imgsMemo[layer.url], x, y, w, h);
+		} else if (layer.type === 'vector') {
+			for (let doodle of layer) {
+				if (doodle.length === 0) continue
+				stroke(doodle.color);
+				strokeWeight(doodle.weight);
+				beginShape();
+				curveVertex(doodle[0][0],doodle[0][1]);
+				for (let v of doodle) {
+					curveVertex(v[0],v[1]);
+				}
+				curveVertex(doodle[doodle.length-1][0],doodle[doodle.length-1][1]);
+				endShape();
+			}
 		}
 	}	
 }
@@ -141,20 +143,28 @@ function decodeDrawing(data) {
 	if (data === '') {
 		return []
 	}
-	const [drawing, attribute] = data.split('%%');
-	let decoded = drawing.split('**').map(doodle => {
-		const [color, weight, v] = doodle.split('&');
-		const xy = [];
-		xy.color = color;
-		xy.weight = weight;
-		if (v === undefined) return xy
-		const flat = v.split(',');
-		for (let i = 0; i < flat.length; i += 2) {
-			xy.push([+flat[i], +flat[i + 1]])
+	const [type, content, attribute] = data.split(drawingDelimiter);
+	let decoded;
+	if (type === 'vector') {
+		decoded = content.split('**').map(doodle => {
+			const [color, weight, v] = doodle.split('&');
+			const xy = [];
+			xy.color = color;
+			xy.weight = weight;
+			if (v === undefined) return xy
+			const flat = v.split(',');
+			for (let i = 0; i < flat.length; i += 2) {
+				xy.push([+flat[i], +flat[i + 1]])
+			}
+			return xy
+		});		
+	} else {
+		decoded = {
+			url: content
 		}
-		return xy
-	});
+	}
 	decoded.attribute = attribute;
+	decoded.type = type;
 	return decoded
 }
 
@@ -162,23 +172,30 @@ function getLayers2(layers) {
 	const r = 3;
 	const layers2 = [];
 	for (let layer in layers) {
-		layers2[layer] = [];
-		for (let doodle in layers[layer]) {
-			layers2[layer][doodle] = [];
-			layers2[layer][doodle].color = layers[layer][doodle].color;
-			layers2[layer][doodle].weight = layers[layer][doodle].weight;
-			let c = 0;
-			for (let v of layers[layer][doodle]) {
-				layers2[layer][doodle][c] = [...v];
-				let rnd = random(1);
-				if (rnd < 0.5) {
-					layers2[layer][doodle][c][0] += int(random(-r, r));
-				} else {
-					layers2[layer][doodle][c][1] += int(random(-r, r));	
+		if (layers[layer].type === 'vector') {
+			layers2[layer] = [];
+			for (let doodle in layers[layer]) {
+				layers2[layer][doodle] = [];
+				layers2[layer][doodle].color = layers[layer][doodle].color;
+				layers2[layer][doodle].weight = layers[layer][doodle].weight;
+				let c = 0;
+				for (let v of layers[layer][doodle]) {
+					layers2[layer][doodle][c] = [...v];
+					let rnd = random(1);
+					if (rnd < 0.5) {
+						layers2[layer][doodle][c][0] += int(random(-r, r));
+					} else {
+						layers2[layer][doodle][c][1] += int(random(-r, r));	
+					}
+					c++;
 				}
-				c++;
 			}
+			layers2[layer].attribute = layers[layer].attribute;
+			layers2[layer].type = layers[layer].type;
+		} else {
+			layers2[layer] = layers[layer];
 		}
+		
 	}
 	return layers2
 }
