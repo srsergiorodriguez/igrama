@@ -18,17 +18,17 @@
 
 h1, h2 {
   text-align: center;
-  margin: 10px;
+  margin: 5px;
   font-weight: 300;
   color: white;
 }
 
 h1 {
-  font-size: 22px;
+  font-size: 20px;
 }
 
 h2 {
-  font-size: 14px;
+  font-size: 12px;
 }
 
 footer {
@@ -114,7 +114,7 @@ footer {
 .sections-container {
   display: flex;
   flex-direction: column;
-  margin: 15px 0px;
+  margin: 5px 0px;
 }
 
 .section-btn {
@@ -125,7 +125,7 @@ footer {
   width: 90px;
   border: none;
   border-radius: 0px 5px 13px 0px;
-  padding: 4px;
+  padding: 3px;
   margin: 1px 0px;
   cursor: pointer;
 }
@@ -157,7 +157,7 @@ footer {
 .actions-container {
   display: flex;
   flex-direction: column;
-  margin: 15px;
+  margin: 10px;
 }
 
 .action-btn {
@@ -167,10 +167,16 @@ footer {
   box-shadow: none;
   border: none;
   border-radius: 4px;
-  padding: 5px;
+  padding: 4px;
   max-width: 90px;
   margin: 1px;
   cursor: pointer;
+}
+
+.emoji-btn {
+  font-size: 29px;
+  padding:0;
+  background: none;
 }
 
 .action-btn:hover {
@@ -184,7 +190,7 @@ footer {
 /*  palette  */
 .pencil-config {
   width: 100px;
-  margin: 15px;
+  margin: 0px 10px 5px;
 }
 
 .pencil-preview {
@@ -193,7 +199,7 @@ footer {
   background-color: #eeeeee;
   background-image: url("./assets/checkers.png");
   background-size: contain;
-  margin: 10px auto;
+  margin: 2px auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -273,4 +279,9 @@ footer {
 
 .alert-btn:active {
   background:var(--active);
+}
+
+.coded-miniature {
+  padding: 10px;
+  width: 60%;
 }
