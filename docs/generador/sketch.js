@@ -43,6 +43,7 @@ async function setup() {
 		} else if (f.subtype === 'png') {
 			const dataUrl = f.data;
 			const data = await decodeImage(dataUrl);
+			newStructureDiv.remove();
 			start(data);
 		} else {
 			alert("El archivo no es compatible");
@@ -118,12 +119,12 @@ async function drawLayers(layers) {
 	for (let [index, layer] of layers.entries()) {
 		const {w, h, x, y} = sectionsData[index];
 		if (layer.type === 'url') {
-			if (imgsMemo[layer.url] === undefined) {
-				imgsMemo[layer.url] = await new Promise(resolve => {loadImage(layer.url, d => {resolve(d)})});
+			if (imgsMemo[layer.content] === undefined) {
+				imgsMemo[layer.content] = await new Promise(resolve => {loadImage(layer.content, d => {resolve(d)})});
 			}
 			image(imgsMemo[layer.url], x, y, w, h);
 		} else if (layer.type === 'vector') {
-			for (let doodle of layer) {
+			for (let doodle of layer.content) {
 				if (doodle.length === 0) continue
 				stroke(doodle.color);
 				strokeWeight(doodle.weight);
@@ -144,9 +145,9 @@ function decodeDrawing(data) {
 		return []
 	}
 	const [type, content, attribute] = data.split(drawingDelimiter);
-	let decoded;
+	let decoded = {};
 	if (type === 'vector') {
-		decoded = content.split('**').map(doodle => {
+		decoded.content = content.split('**').map(doodle => {
 			const [color, weight, v] = doodle.split('&');
 			const xy = [];
 			xy.color = color;
@@ -157,11 +158,9 @@ function decodeDrawing(data) {
 				xy.push([+flat[i], +flat[i + 1]])
 			}
 			return xy
-		});		
+		});
 	} else {
-		decoded = {
-			url: content
-		}
+		decoded.content = content
 	}
 	decoded.attribute = attribute;
 	decoded.type = type;
@@ -170,32 +169,22 @@ function decodeDrawing(data) {
 
 function getLayers2(layers) {
 	const r = 3;
-	const layers2 = [];
-	for (let layer in layers) {
-		if (layers[layer].type === 'vector') {
-			layers2[layer] = [];
-			for (let doodle in layers[layer]) {
-				layers2[layer][doodle] = [];
-				layers2[layer][doodle].color = layers[layer][doodle].color;
-				layers2[layer][doodle].weight = layers[layer][doodle].weight;
-				let c = 0;
-				for (let v of layers[layer][doodle]) {
-					layers2[layer][doodle][c] = [...v];
+	const layers2 = JSON.parse(JSON.stringify(layers));
+	for (let [i, layer] of layers2.entries()) {
+		if (layer.type === 'vector') {
+			for (let [j, doodle] of layer.content.entries()) {
+				for (let [k, v] of doodle.entries()) {
 					let rnd = random(1);
 					if (rnd < 0.5) {
-						layers2[layer][doodle][c][0] += int(random(-r, r));
+						v[0] += int(random(-r, r));
 					} else {
-						layers2[layer][doodle][c][1] += int(random(-r, r));	
+						v[1] += int(random(-r, r));	
 					}
-					c++;
 				}
+				doodle.color = layers[i].content[j].color;
+				doodle.weight = layers[i].content[j].weight;
 			}
-			layers2[layer].attribute = layers[layer].attribute;
-			layers2[layer].type = layers[layer].type;
-		} else {
-			layers2[layer] = layers[layer];
 		}
-		
 	}
 	return layers2
 }
@@ -215,7 +204,6 @@ function getGif() {
 	gif.addFrame(g1.elt, {delay: frameDelay});
 	gif.addFrame(g2.elt, {delay: frameDelay});
 	gif.on('finished', function(blob) {
-		//window.open(URL.createObjectURL(blob));
 		const a = document.createElement("a");
 		a.href = URL.createObjectURL(blob);
 		a.setAttribute("download", `igramaImg.gif`);
@@ -233,7 +221,8 @@ function getGrammar() {
 		metadata: {
 			sectionsN,
 			sectionsNames,
-			attributes
+			attributes,
+			size: s
 		},
 		grammar,
 		sections: sectionsData,

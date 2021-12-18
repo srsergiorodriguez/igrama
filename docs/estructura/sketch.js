@@ -49,7 +49,8 @@ function getModel() {
 		metadata: {
 			sectionsN,
 			sectionsNames,
-			attributes
+			attributes,
+			size: s
 		},
 		sections: sectionsData,
 		sketch: btoa(sketch.map(doodle => doodle.toString()).join('**'))
@@ -102,20 +103,21 @@ function gui() {
 
 	// ACTIONS & TOOLS
 	const actionsDiv = createDiv('').class('actions-container').parent(guiCont);
+	const emojiBtns = createDiv('').class('emoji-btns-container').parent(actionsDiv);
 
-	createButton('Deshacer').class('action-btn').parent(actionsDiv).mouseClicked(() => {
+	createButton('↩️').class('action-btn').addClass('emoji-btn').parent(emojiBtns).mouseClicked(() => {
 		if (sketch.length <= 0) return
 		undoStack.push(sketch.pop());
 		showSketch();
 	});
 
-	createButton('Rehacer').class('action-btn').parent(actionsDiv).mouseClicked(() => {
+	createButton('↪️').class('action-btn').addClass('emoji-btn').parent(emojiBtns).mouseClicked(() => {
 		if (undoStack.length <= 0) return
 		sketch.push(undoStack.pop());
 		showSketch();
 	});
 
-	createButton('Borrar').class('action-btn').parent(actionsDiv).mouseClicked(() => {
+	createButton('💣').class('action-btn').addClass('emoji-btn').parent(emojiBtns).mouseClicked(() => {
 		sketch = [];
 		undoStack = [];
 		background(255);

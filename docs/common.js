@@ -62,8 +62,14 @@ function encodeToImage(data, layersData = false) {
   canvas.width = w;
   canvas.height = h;
 
-	graphics.background(255, 255, 255);
-
+	graphics.background(255);
+	graphics.loadPixels();
+	for (let i = 0; i < graphics.pixels.length; i++) {
+		if (i % 3 !== 0) {
+			graphics.pixels[i] = random(200, 255);
+		}
+	}
+	graphics.updatePixels();
 	if (layersData) {
 		drawMiniature(graphics, layersData);
 	}
@@ -73,7 +79,7 @@ function encodeToImage(data, layersData = false) {
 	
 	graphics.textSize(Math.floor(w*0.1));
 	graphics.textAlign(CENTER, CENTER);
-	graphics.text("igrama", w/2, h*0.85);
+	graphics.text("igrama", w*0.2, h*0.9);
 	graphics.noFill();
 	graphics.rect(0, 0, w, h);
 
@@ -165,6 +171,7 @@ async function decodeImage(dataUrl) {
 		const comp = parseInt(v1 + v2, 2);
 		decoded += String.fromCharCode(comp);
 	}
+	
 	decoded = decoded.split('!END!END!')[0];
 	decoded = atob(decoded);
 	return JSON.parse(decoded)
