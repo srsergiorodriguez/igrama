@@ -2,15 +2,16 @@
 
 :root {
   /* SLIDERS */
-  --frame: #bad1e3;
-  --toolbar: #303a4a;
+  --frame: #ffadad;
+  --toolbar: #1d2d36;
   --active: #666666;
   --hover: #cccccc;
   --btn: #ffffff;
+  --font: white;
 }
 
 * {
-  font-family: 'Comfortaa', sans-serif;
+  font-family: 'Helvetica', sans-serif;
   box-sizing: border-box;
   margin: 0px;
   padding: 0px;
@@ -20,7 +21,7 @@ h1, h2 {
   text-align: center;
   margin: 5px;
   font-weight: 300;
-  color: white;
+  color: var(--font);
 }
 
 h1 {
@@ -36,6 +37,10 @@ footer {
   font-size: 10px;
 }
 
+.select {
+  width: 100%;
+}
+
 #general {
   display: flex;
   margin: auto;
@@ -47,9 +52,9 @@ footer {
 #chalkboard {
   box-sizing: content-box;
   position: relative;
-  width: 680px;
-  height: 680px;
   border: solid 10px var(--frame);
+  border-radius: 10px 0px 0px 10px;
+  background: var(--frame);
   user-select: none;
   -moz-user-select: none;
   -webkit-user-select: none;
@@ -77,18 +82,24 @@ footer {
   left: 0px;
   bottom: 0px;
   text-align: center;
-  color: black;
+  color: white;
   font-size: 20px;
-  background: white;
+  background: black;
   touch-action: none;
+}
+
+canvas {
+  border: solid 1px;
 }
 
 /* gui */
 
 #gui {
   background: var(--toolbar);
-  border: none;
-  width: 170px;
+  border: solid 1px;
+  border-left: none;
+  border-radius: 0px 20px 20px 0px;
+  width: 110px;
 }
 
 .gui-container {
@@ -102,9 +113,24 @@ footer {
   margin: 50px 10px;
 }
 
+.info-text {
+  color: var(--font);
+  padding: 5px 0px;
+  font-size: 12px;
+}
+
 .info {
-  color: var(--btn);
-  padding: 10px 0px;
+  color: var(--font);
+  padding: 10px 10px;
+  font-size: 20px;
+}
+
+.info label {
+  margin: 0px 5px;
+}
+
+.dim-input {
+  width: 50%;
 }
 
 /* buttons */
@@ -118,7 +144,7 @@ footer {
 }
 
 .section-btn {
-  font-size: 14px;
+  font-size: 12px;
   color: #111111;
   background: var(--btn);
   box-shadow: none;
@@ -155,28 +181,35 @@ footer {
 /* actions */
 
 .actions-container {
-  display: flex;
-  flex-direction: column;
-  margin: 10px;
+  /* display: flex; */
+  /* flex-direction: column; */
+  margin: 5px;
 }
 
 .action-btn {
-  font-size: 14px;
+  font-size: 12px;
   color: #111111;
   background: var(--btn);
   box-shadow: none;
   border: none;
   border-radius: 4px;
-  padding: 4px;
-  max-width: 90px;
-  margin: 1px;
+  padding: 1px;
+  max-width: 30px;
+  margin: 3px 1px;
   cursor: pointer;
 }
 
-.emoji-btn {
-  font-size: 29px;
-  padding:0;
-  background: none;
+.btn-icon {
+  max-width: 28px;
+}
+
+.salient-btn {
+  background: #fffc40;
+  /* display: block; */
+}
+
+.toggled-btn {
+  background: #66ff6b;
 }
 
 .action-btn:hover {
@@ -190,12 +223,12 @@ footer {
 /*  palette  */
 .pencil-config {
   width: 100px;
-  margin: 0px 10px 5px;
+  margin: 0px 5px 5px;
 }
 
 .pencil-preview {
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   background-color: #eeeeee;
   background-image: url("./assets/checkers.png");
   background-size: contain;
@@ -212,12 +245,12 @@ footer {
 
 .palette {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 
 .palette-btn {
-  height: 20px;
-  width: 20px;
+  width: 100%;
+  height: 25px;
   border: solid 1px black;
   cursor: pointer;
 }

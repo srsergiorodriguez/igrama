@@ -1,11 +1,15 @@
-const version = "1.1.0";
+const version = "1.2.1";
 
 const maxSections = 10;
 const sketchColor = '#00ffff';
 const sketchWeight = 4;
 
-const palette = ["#FFFFFF", "#000000", "#FF4136", "#FF6565", 
-"#F19317", "#FFE923", "#1B508C", "#2785F1", "#2ECC40", "#1DE1A3"];
+const palette = [
+	"#FFFFFF", "#bdbdbd", "#595959", "#000000",
+	"#1B508C", "#2785F1", "#00c9a5", "#2ECC40",
+	"#FF4136", "#FF6565", "#ff6bd3", "#a243de",
+	"#914a29", "#ff8400", "#f0ae67", "#FFE923"
+];
 
 const codedImgSize = 512;
 const drawingDelimiter = '%%';

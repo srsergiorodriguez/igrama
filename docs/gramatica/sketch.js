@@ -1,6 +1,4 @@
-let s; // Size of canvas
 let cnv; // canvas
-
 let sectionsN; // Number of sections
 let sectionsNames; // Names of sections
 let sectionsData = []; // Position and size of sections
@@ -14,18 +12,9 @@ const layers = []; // Contains current drawing
 const layersData = []; // Contains all drawings
 const undoStacks = [];
 /*
-
 LAYER -- DATOS DEL DIBUJO CON VECTOR
 SECTION -- ESPACIO DONDE PUEDE DIBUJARSE (PARA HACER UNA LAYER)
 SKETCH -- DIBUJO DE REFERENCIA QUE ESTÁ POR DEBAJO DE TODO
-
-layersData
-capa1: layer
-capa2: drawing
-capa3: doodle
-capa4: v: x,y
-
-coding: hex & weight & vx,vy... ** hex & weight & vx,vy...
 */
 
 let currentWeight = 4;
@@ -34,9 +23,6 @@ let currentColor = '#000000';
 
 async function setup() {
 	select('footer').html(`${version} por Sergio Rodríguez Gómez`);
-	s = +select('#chalkboard').style('width').replace('px','');
-	select('#overlay').style('width', s+'px').style('height', s+'px');
-	cnv = createCanvas(s, s).parent('#canvas');
 	background(255);
 
 	const newStructureDiv = createDiv('').class('new-struct').parent('#gui');
@@ -66,7 +52,9 @@ async function setup() {
 }
 
 function start(file) {
+	cnv = createCanvas(file.metadata.width, file.metadata.height).parent('#canvas');
 	sectionsN = file.metadata.sectionsN;
+
 	sectionsNames = file.metadata.sectionsNames;
 	sectionsData = file.sections;
 	attributes = file.metadata.attributes;
@@ -105,26 +93,26 @@ function gui() {
 
 	const emojiBtns = createDiv('').class('emoji-btns-container').parent(actionsDiv);
 
-	createButton('↩️').class('action-btn').addClass('emoji-btn').parent(emojiBtns).mouseClicked(() => {
+	createButton(`${iconImg(undoIcon)}`).class('action-btn').parent(emojiBtns).mouseClicked(() => {
 		const i = +select('.adjustable-section').attribute('i');
 		if (layers[i].length <= 0) return
 		undoStacks[i].push(layers[i].pop());
 		drawLayers(layers);
 	});
 
-	createButton('↪️').class('action-btn').addClass('emoji-btn').parent(emojiBtns).mouseClicked(() => {
+	createButton(`${iconImg(redoIcon)}`).class('action-btn').parent(emojiBtns).mouseClicked(() => {
 		const i = +select('.adjustable-section').attribute('i');
 		if (undoStacks[i].length <= 0) return
 		layers[i].push(undoStacks[i].pop());
 		drawLayers(layers);
 	});
 
-	createButton('💣').class('action-btn').addClass('emoji-btn').parent(emojiBtns).mouseClicked(() => {
+	createButton(`${iconImg(bombIcon)}`).class('action-btn').parent(emojiBtns).mouseClicked(() => {
 		layers[+select('.adjustable-section').attribute('i')] = [];
 		drawLayers(layers);
 	});
 
-	createButton('Agregar a gramática').class('action-btn').parent(actionsDiv).mouseClicked(() => {
+	createButton(`${iconImg(addToGrammarIcon)}`).class('action-btn').addClass('salient-btn').parent(actionsDiv).mouseClicked(() => {
 		const index = +select('.adjustable-section').attribute('i');
 
 		const addLayer = () => {
@@ -134,6 +122,7 @@ function gui() {
 				layersData[index].push(layers[index]);
 			}
 			layers[index] = [];
+			undoStacks[index] = [];
 			drawLayers(layers);
 		}
 		if (attributes[index]) {
@@ -147,7 +136,7 @@ function gui() {
 		}
 	});
 
-	createButton('Exportar gramática').class('action-btn').parent(actionsDiv).mouseClicked(() => {
+	createButton(`${iconImg(downloadIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {
 		const grammar = getGrammar();
 		saveJSON(grammar, 'igrama');
 		const grammarCodified = btoa(JSON.stringify(grammar, null, 2));
@@ -155,7 +144,7 @@ function gui() {
 		createImg(dataUrl, "").class('coded-miniature').parent(guiCont);
 	});
 
-	createButton('>>>').class('action-btn').parent(actionsDiv).mouseClicked(() => {
+	createButton(`${iconImg(continueIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {
 		const grammar = getGrammar();
 		const url = btoa(JSON.stringify(grammar, null, 2));
 		localStorage.setItem('igramaModel', url);
@@ -193,7 +182,10 @@ function updateDoodles() {
 		interval = setInterval(() => {
 			if (checkLimits(section)) {
 				doodle.push([mouseX, mouseY]);
+			} else {
+				recordDoodle();
 			}
+
 			if (doodle.length >= 2) {
 				const x1 = doodle[doodle.length - 1][0];
 				const x2 = doodle[doodle.length - 2][0];
@@ -205,16 +197,19 @@ function updateDoodles() {
 			}
 			
 			if (!mouseIsPressed) {
-				clearInterval(interval);
-				const simpleDoodle = simplify(doodle, 3, false) // Simplify from simplify.js
-				simpleDoodle.color = currentColor;
-				simpleDoodle.weight = currentWeight;
-				const i = +section.attribute('i');
-				layers[i].push(simpleDoodle);
-				undoStacks[i] = [];
-				drawLayers(layers);
+				recordDoodle();
 			};
-		}, 10);
+		}, 1);
+
+		function recordDoodle() {
+			clearInterval(interval);
+			const simpleDoodle = simplify(doodle, 3, false) // Simplify from simplify.js
+			simpleDoodle.color = currentColor;
+			simpleDoodle.weight = currentWeight;
+			const i = +section.attribute('i');
+			layers[i].push(simpleDoodle);
+			drawLayers(layers);
+		}
 	};
 	const section = select('.adjustable-section').mousePressed(doodleAction).touchStarted(doodleAction);
 }
@@ -293,7 +288,9 @@ function getGrammar() {
 		metadata: {
 			sectionsN,
 			sectionsNames,
-			attributes
+			attributes,
+			width,
+			height,
 		},
 		sections: sectionsData,
 		grammar: {
@@ -336,6 +333,7 @@ function attributePrompt(callback) {
 	createButton('Cancelar').class('alert-btn').parent(btnDiv).mouseClicked(function() {
 		multiPrompt.remove();
 	});
+
 	createButton('Continuar').class('alert-btn').parent(btnDiv).mouseClicked(function() {
 		callback(input.value());
 		multiPrompt.remove();

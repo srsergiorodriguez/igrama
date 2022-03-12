@@ -1,4 +1,3 @@
-let s;
 let cnv;
 let sectionsN;
 let sectionsNames; // Names of sections
@@ -20,30 +19,24 @@ const imgsMemo = {};
 
 async function setup() {
 	select('footer').html(`${version} por Sergio Rodríguez Gómez`);
-	s = +select('#chalkboard').style('width').replace('px','');
-	cnv = createCanvas(s, s).parent('#canvas');
-	background(255);
 
+	// DROP MODEL
 	const newStructureDiv = createDiv('').class('new-struct').parent('#gui');
 	createP('Arrastra aquí una gramática').class('info').parent(newStructureDiv);
 
 	const params = getURLParams();
-	let file;
 	if (params.model === 'local') {
-		file = await JSON.parse(atob(localStorage.getItem('igramaModel')));
-		newStructureDiv.remove();
+		const file = await JSON.parse(atob(localStorage.getItem('igramaModel')));
 		start(file);
 	}
 
 	select('#gui').drop(async (f) => {
 		if (f.subtype === 'json') {
 			const data = f.data;
-			newStructureDiv.remove();
 			start(data);
 		} else if (f.subtype === 'png') {
 			const dataUrl = f.data;
 			const data = await decodeImage(dataUrl);
-			newStructureDiv.remove();
 			start(data);
 		} else {
 			alert("El archivo no es compatible");
@@ -52,6 +45,10 @@ async function setup() {
 }
 
 function start(file) {
+	selectAll('.new-struct').forEach(d => d.remove());
+	cnv = createCanvas(file.metadata.width, file.metadata.height).parent('#canvas');
+	background(255);
+
 	sectionsN = file.metadata.sectionsN;
 	sectionsNames = file.metadata.sectionsNames;
 	sectionsData = file.sections;
@@ -68,7 +65,12 @@ function start(file) {
 function expand() {
 	layers = aventura.expandGrammar('base').split('|').map(drawing => decodeDrawing(drawing));
 	const text = layers.map(d => d.attribute).reverse().join(' ');
-	select('#text-overlay').html(text);
+	if (text.length > layers.length) {
+		select('#text-overlay').show().html(text);
+	} else {
+		select('#text-overlay').hide();
+	}
+	
 	layers2 = getLayers2(layers);
 	drawLayers(layers);
 }
@@ -82,32 +84,37 @@ function gui() {
 	// ACTIONS & TOOLS
 	const actionsDiv = createDiv('').class('actions-container').parent(guiCont);
 
-	createButton('Generar').class('action-btn').parent(actionsDiv).mouseClicked(() => {
+	createButton(`${iconImg(newImageIcon)}`).class('action-btn').addClass('salient-btn').parent(actionsDiv).mouseClicked(() => {
 		expand();
 	});
 
-	createCheckbox('Tembloroso').class('info').parent(actionsDiv).changed(function() {
-		if (this.checked()) {
+	let checked = false;
+	const wiggleBtn = createButton(`${iconImg(wiggleIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(function () {
+		checked = !checked;
+		if (checked) {
 			let step = 0;
 			squigInterval = setInterval(() => {
 				drawLayers(step % 2 === 0 ? layers : layers2);
 				step++;
 			}, frameDelay);
+			wiggleBtn.addClass('toggled-btn');
 		} else {
 			clearInterval(squigInterval);
 			drawLayers(layers);	
+			wiggleBtn.removeClass('toggled-btn');
 		}
+		
 	});
 
-	createButton('Exportar .png').class('action-btn').parent(actionsDiv).mouseClicked(() => {
+	createButton(`${iconImg(pngIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {
 		save(cnv, 'igramaImg.png');
 	});
 
-	createButton('Exportar .gif').class('action-btn').parent(actionsDiv).mouseClicked(() => {
+	createButton(`${iconImg(gifIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {
 		getGif();
 	});
 
-	createButton('Exportar gramática').class('action-btn').parent(actionsDiv).mouseClicked(() => {
+	createButton(`${iconImg(downloadIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {
 		const grammar = getGrammar();
 		saveJSON(grammar, 'igrama');
 	});
@@ -222,7 +229,8 @@ function getGrammar() {
 			sectionsN,
 			sectionsNames,
 			attributes,
-			size: s
+			width,
+			height
 		},
 		grammar,
 		sections: sectionsData,

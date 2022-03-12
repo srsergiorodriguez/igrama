@@ -1,4 +1,4 @@
-let s;
+let width = 10, height = 10;
 let cnv;
 let sectionsN;
 let sectionsNames = [];
@@ -11,32 +11,41 @@ let drawingSketch = true;
 
 function setup() {
 	select('footer').html(`${version} por Sergio Rodríguez Gómez`);
-	s = +select('#chalkboard').style('width').replace('px','');
-	select('#overlay').style('width', s+'px').style('height', s+'px');
-	cnv = createCanvas(s, s).parent('#canvas');
+	noCanvas();
 	strokeJoin(ROUND);
-	background(255);
 
 	const newStructureDiv = createDiv('').class('new-struct').parent('#gui');
-	createP('Escoge el número de secciones:').class('info').parent(newStructureDiv);
+	createP('Escoge las dimensiones:').class('info-text').parent(newStructureDiv);
+
+	const dimXInput = createInput('400','number').class('dim-input')
+		.attribute('max',3000).attribute('min',128).parent(newStructureDiv);
+	const dimYInput = createInput('400','number').class('dim-input')
+		.attribute('max',3000).attribute('min',128).parent(newStructureDiv);
+
+	createP('y el número de secciones:').class('info-text').parent(newStructureDiv);
 	const sectionSelector = createSelect().class('select').parent(newStructureDiv).changed(() => {
 		sectionsN = +sectionSelector.value();
-		newStructureDiv.remove();
+		width = +dimXInput.value();
+		height = +dimYInput.value();
 		randomSections();
 		gui();
 	});
+	
+
 	for (let i = 1; i <= maxSections; i++) {
 		sectionSelector.option(i === 1 ? 'Selecciona...' : i);
 	}
-	createP('...o arrastra aquí un modelo').class('info').parent(newStructureDiv);
+	createP('...o arrastra aquí un modelo').class('info-text').parent(newStructureDiv);
 
 	select('#gui').drop((file) => {
 		if (file.subtype === 'json') {
-			sectionsN = file.data.metadata.sectionsN;
-			sectionsData = file.data.sections;
+			const f = file.data;
+			sectionsN = f.metadata.sectionsN;
+			sectionsData = f.sections;
+			width = f.metadata.width;
+			height = f.metadata.height;
 			attributes = [];
-			sketch = decodeSketch(file.data.sketch);
-			newStructureDiv.remove();
+			sketch = decodeSketch(f.sketch);
 			gui();
 		} else {
 			alert("El archivo no es compatible");
@@ -50,7 +59,8 @@ function getModel() {
 			sectionsN,
 			sectionsNames,
 			attributes,
-			size: s
+			width,
+			height
 		},
 		sections: sectionsData,
 		sketch: btoa(sketch.map(doodle => doodle.toString()).join('**'))
@@ -59,19 +69,25 @@ function getModel() {
 }
 
 function randomSections() {
+	// secciones al azar dentro de los límites del canvas
 	for (let i = 0; i < sectionsN; i++) {
-		const w = random(100, s);
-		const h = random(100, s);
+		const w = floor(random(100, width));
+		const h = floor(random(100, height));
 		sectionsData[i] = {
 			w, h, i,
-			x: min(random(s), s - w),
-			y: min(random(s), s - h)
+			x: floor(min(random(width), width - w)),
+			y: floor(min(random(width), height - h))
 		};
 	};
 }
 
 function gui() {
+	cnv = createCanvas(width, height).parent('#canvas').style('visibility', 'visible');
+	background(255);
+
 	selectAll('.gui-container').forEach(d => d.remove());
+	selectAll('.new-struct').forEach(d => d.remove());
+	
 	const guiCont = createDiv('').class('gui-container').parent('#gui');
 	showSketch();
 
@@ -105,32 +121,32 @@ function gui() {
 	const actionsDiv = createDiv('').class('actions-container').parent(guiCont);
 	const emojiBtns = createDiv('').class('emoji-btns-container').parent(actionsDiv);
 
-	createButton('↩️').class('action-btn').addClass('emoji-btn').parent(emojiBtns).mouseClicked(() => {
+	createButton(`${iconImg(undoIcon)}`).class('action-btn').parent(emojiBtns).mouseClicked(() => {
 		if (sketch.length <= 0) return
 		undoStack.push(sketch.pop());
 		showSketch();
 	});
 
-	createButton('↪️').class('action-btn').addClass('emoji-btn').parent(emojiBtns).mouseClicked(() => {
+	createButton(`${iconImg(redoIcon)}`).class('action-btn').parent(emojiBtns).mouseClicked(() => {
 		if (undoStack.length <= 0) return
 		sketch.push(undoStack.pop());
 		showSketch();
 	});
 
-	createButton('💣').class('action-btn').addClass('emoji-btn').parent(emojiBtns).mouseClicked(() => {
+	createButton(`${iconImg(bombIcon)}`).class('action-btn').parent(emojiBtns).mouseClicked(() => {
 		sketch = [];
 		undoStack = [];
 		background(255);
 	});
 
-	createButton('Exportar modelo').class('action-btn').parent(actionsDiv).mouseClicked(() => {
+	createButton(`${iconImg(downloadIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {
 		sectionNamesPrompt(() => {
 			const model = getModel();
 			saveJSON(model, 'modelo');
 		});
 	});
 
-	createButton('Compartir').class('action-btn').parent(actionsDiv).mouseClicked(function() {
+	createButton(`${iconImg(shareIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(function() {
 		sectionNamesPrompt(() => {
 			const model = getModel();
 			const url = `../gramatica/?model=url&data=${btoa(JSON.stringify(model, null, 2))}`;
@@ -142,7 +158,7 @@ function gui() {
 		});
 	});
 
-	createButton('>>>').class('action-btn').parent(actionsDiv).mouseClicked(() => {
+	createButton(`${iconImg(continueIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {
 		sectionNamesPrompt(() => {
 			const model = getModel();
 			const url = btoa(JSON.stringify(model, null, 2));
@@ -251,12 +267,12 @@ function updateAdjust() {
 				refY = e === undefined ? mouseY : movedY;	
 				let newW = refX - x;
 				let newH = refY - y;
-				newW = newW + x >= s ? s - x : newW;
-				newH = newH + y >= s ? s - y : newH;
+				newW = newW + x >= width ? width - x : newW;
+				newH = newH + y >= height ? height - y : newH;
 				sectionsData[i].w = newW;
 				sectionsData[i].h = newH;
-				section.style('width', sectionsData[i].w  + 'px');
-				section.style('height', sectionsData[i].h + 'px');
+				section.style('width', floor(sectionsData[i].w)  + 'px');
+				section.style('height', floor(sectionsData[i].h) + 'px');
 				if (!mouseIsPressed) {clearInterval(interval)}
 			}, 100);			
 		} else {
@@ -267,12 +283,12 @@ function updateAdjust() {
 				let newX = refX - offsetX;
 				let newY = refY - offsetY;
 				// Mantener nueva posición dentro de los límites del canvas
-				newX = newX < 0 ? 0 : newX > s - w ? s - w : newX;
-				newY = newY < 0 ? 0 : newY > s - h ? s - h : newY;
+				newX = newX < 0 ? 0 : newX > width - w ? width - w : newX;
+				newY = newY < 0 ? 0 : newY > height - h ? height - h : newY;
 				sectionsData[i].x = newX;
 				sectionsData[i].y = newY;
-				section.style('left', sectionsData[i].x + 'px');
-				section.style('top', sectionsData[i].y + 'px');
+				section.style('left', floor(sectionsData[i].x) + 'px');
+				section.style('top', floor(sectionsData[i].y) + 'px');
 				if (!mouseIsPressed) {clearInterval(interval)}
 			}, 100);
 		}
@@ -283,6 +299,8 @@ function updateAdjust() {
 	}).touchStarted(function(e) {
 		fixedX = e.touches[0].pageX;
 		fixedY = e.touches[0].pageY;
+		movedX = e.touches[0].pageX;
+		movedY = e.touches[0].pageY;
 		adjustAction(e);
 	}).touchMoved(function(e) {
 		movedX = e.touches[0].pageX;
