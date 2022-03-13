@@ -38,8 +38,8 @@ function setup() {
 	createP('...o arrastra aquí un modelo').class('info-text').parent(newStructureDiv);
 
 	select('#gui').drop((file) => {
-		if (file.subtype === 'json') {
-			const f = file.data;
+		if (file.subtype === 'json' || file.subtype === 'plain') {
+			const f = file.subtype === 'json' ? file.data : JSON.parse(file.data);
 			sectionsN = f.metadata.sectionsN;
 			sectionsData = f.sections;
 			width = f.metadata.width;
@@ -266,7 +266,7 @@ function updateAdjust() {
 			// JALANDO DE LA ESQUINA
 			interval = setInterval(() => {
 				refX = e === undefined ? mouseX : movedX;
-				refY = e === undefined ? mouseY : movedY;	
+				refY = e === undefined ? mouseY : movedY;
 				let newW = refX - x;
 				let newH = refY - y;
 				newW = newW + x >= width ? width - x : newW;
@@ -276,6 +276,8 @@ function updateAdjust() {
 				section.style('width', floor(sectionsData[i].w)  + 'px');
 				section.style('height', floor(sectionsData[i].h) + 'px');
 				if (!mouseIsPressed) {clearInterval(interval)}
+
+				select('#debug-span').html(`new:${floor(newW)}/${floor(newH)}<br>fix${floor(refX)}/${floor(refY)}`)
 			}, 100);			
 		} else {
 			// MOVIENDO

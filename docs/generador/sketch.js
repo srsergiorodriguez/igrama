@@ -33,7 +33,6 @@ async function setup() {
 	}
 
 	select('#gui').drop(async (f) => {
-		console.log(f.subtype);
 		if (f.subtype === 'json' || f.subtype === 'plain') {
 			const data = f.subtype === 'json' ? f.data : JSON.parse(f.data);
 			start(data);

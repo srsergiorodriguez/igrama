@@ -24,7 +24,6 @@ let currentColor = '#000000';
 async function setup() {
 	select('footer').html(`${version} por Sergio Rodríguez Gómez`);
 	noCanvas();
-	
 
 	const newStructureDiv = createDiv('').class('new-struct').parent('#gui');
 	createP('Arrastra aquí una estructura...').class('info-text').parent(newStructureDiv);
@@ -42,8 +41,8 @@ async function setup() {
 	}
 
 	select('#gui').drop((f) => {
-		if (f.subtype === 'json') {
-			const file = f.data;
+		if (f.subtype === 'json' || f.subtype === 'plain') {
+			const file = f.subtype === 'json' ? f.data : JSON.parse(f.data);
 			start(file);
 			newStructureDiv.remove();
 		} else {
@@ -55,7 +54,7 @@ async function setup() {
 function start(file) {
 	cnv = createCanvas(file.metadata.width, file.metadata.height).parent('#canvas').style('visibility', 'visible');
 	background(255);
-	
+
 	sectionsN = file.metadata.sectionsN;
 
 	sectionsNames = file.metadata.sectionsNames;
@@ -141,7 +140,7 @@ function gui() {
 
 	createButton(`${iconImg(downloadIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {
 		const grammar = getGrammar();
-		saveJSON(grammar, 'igrama');
+		//saveJSON(grammar, 'igrama');
 		const grammarCodified = btoa(JSON.stringify(grammar, null, 2));
 		const dataUrl = encodeToImage(grammarCodified, layersData);
 		createImg(dataUrl, "").class('coded-miniature').parent(guiCont);
