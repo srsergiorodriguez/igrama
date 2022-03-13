@@ -19,10 +19,12 @@ const imgsMemo = {};
 
 async function setup() {
 	select('footer').html(`${version} por Sergio Rodríguez Gómez`);
+	noCanvas();
+	select('#text-overlay').hide();
 
 	// DROP MODEL
 	const newStructureDiv = createDiv('').class('new-struct').parent('#gui');
-	createP('Arrastra aquí una gramática').class('info').parent(newStructureDiv);
+	createP('Arrastra aquí una gramática').class('info-text').parent(newStructureDiv);
 
 	const params = getURLParams();
 	if (params.model === 'local') {
@@ -31,8 +33,9 @@ async function setup() {
 	}
 
 	select('#gui').drop(async (f) => {
-		if (f.subtype === 'json') {
-			const data = f.data;
+		console.log(f.subtype);
+		if (f.subtype === 'json' || f.subtype === 'plain') {
+			const data = f.subtype === 'json' ? f.data : JSON.parse(f.data);
 			start(data);
 		} else if (f.subtype === 'png') {
 			const dataUrl = f.data;
@@ -46,7 +49,7 @@ async function setup() {
 
 function start(file) {
 	selectAll('.new-struct').forEach(d => d.remove());
-	cnv = createCanvas(file.metadata.width, file.metadata.height).parent('#canvas');
+	cnv = createCanvas(file.metadata.width, file.metadata.height).parent('#canvas').style('visibility', 'visible');
 	background(255);
 
 	sectionsN = file.metadata.sectionsN;
@@ -116,7 +119,7 @@ function gui() {
 
 	createButton(`${iconImg(downloadIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {
 		const grammar = getGrammar();
-		saveJSON(grammar, 'igrama');
+		saveTXT(grammar, 'igrama');
 	});
 }
 
