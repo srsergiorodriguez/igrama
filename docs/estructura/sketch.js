@@ -151,9 +151,11 @@ function gui() {
 			const model = getModel();
 			const url = `../gramatica/?model=url&data=${btoa(JSON.stringify(model, null, 2))}`;
 			navigator.clipboard.writeText(url);
-			this.html('¡Copiado!');
+			this.html(`${iconImg(clipboardIcon)}`);
+			this.addClass('salient-btn');
 			setTimeout(() => {
-				this.html('Compartir');
+				this.html(`${iconImg(shareIcon)}`);
+				this.removeClass('salient-btn');
 			}, 1000);
 		});
 	});
