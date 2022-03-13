@@ -68,19 +68,20 @@ function encodeToImage(data, layersData = false) {
 	selectAll('.coded-miniature').forEach(d => d.remove());
 
 	const str = data + "!END!END!";
-	const utf = (ch) => ch !== undefined ? ch.charCodeAt(0) : 32;
+	// const utf = (ch) => ch !== undefined ? ch.charCodeAt(0) : 32;
+	const utf = (ch) => ch.charCodeAt(0);
   const w = codedImgSize;
-	const h = codedImgSize;
+	const h = floor((codedImgSize * height) / width);
   const graphics = createGraphics(w, h).class('coded-miniature');
 	const canvas = graphics.elt
   const context = canvas.getContext("2d");
   canvas.width = w;
-  canvas.height = h;
+  canvas.height = floor((codedImgSize * height) / width);
 
 	graphics.background(255);
 	graphics.loadPixels();
 	for (let i = 0; i < graphics.pixels.length; i++) {
-		if (i % 3 !== 0) {
+		if ((i + 1) % 4 !== 0 ) {
 			graphics.pixels[i] = random(200, 255);
 		}
 	}
@@ -95,11 +96,11 @@ function encodeToImage(data, layersData = false) {
 	graphics.textSize(Math.floor(w*0.1));
 	graphics.textAlign(CENTER, CENTER);
 	graphics.text("igrama", w*0.2, h*0.9);
-	graphics.noFill();
-	graphics.rect(0, 0, w, h);
 
 	const imageDataObject = context.getImageData(0, 0, w, h);
   const imageData = imageDataObject.data;
+
+	dataUrl = canvas.toDataURL('image/png');
 
 	const decomposed = [];
 	for (let i = 0; i < str.length; i++) {
@@ -110,23 +111,22 @@ function encodeToImage(data, layersData = false) {
 		decomposed.push(v2);
 	}
 
-  let counter = 0;
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const index = 4 * (y * w) + 4 * x;
-			if (counter >= decomposed.length) continue
-			for (let i = 0; i < 3; i++) {
-				const bin = imageData[index + i].toString(2).padStart(8, '0');
-				const crossover = parseInt(bin.slice(0, 4) + decomposed[counter], 2);
-				imageData[index + i] = crossover
-				counter++;
-			}
-    }
-  }
+	let offset = 0;
+	for (let i = 0; i < imageData.length; i++) {
+		if (i - offset > decomposed.length) break
+		if ((i + 1) % 4 !== 0) {
+			const bin = imageData[i].toString(2).padStart(8, '0');
+			const crossover = parseInt(bin.slice(0, 4) + decomposed[i - offset], 2);
+			imageData[i] = crossover;	
+		} else {
+			offset++;
+		}
+	}
+
   context.putImageData(imageDataObject, 0, 0);
-  dataUrl =  canvas.toDataURL('image/png', 1.0);
+	dataUrl = canvas.toDataURL('image/png', 1);
   canvas.remove();
-	
+
   return dataUrl
 }
 
@@ -135,6 +135,12 @@ function drawMiniature(graphics, layersData) {
 		const sel = random(d);
 		return sel === undefined ? [] : sel
 	});
+	graphics.strokeJoin(ROUND);
+	graphics.strokeCap(ROUND);
+
+	const w = codedImgSize;
+	const h = floor((codedImgSize * height) / width);
+
 	graphics.noFill();
 	for (let layer of gen) {
 		for (let doodle of layer) {
@@ -142,16 +148,16 @@ function drawMiniature(graphics, layersData) {
 			graphics.stroke(doodle.color);
 			graphics.strokeWeight(map(doodle.weight, 0, width, 0, codedImgSize));
 			graphics.beginShape();
-			let v0 = map(doodle[0][0], 0, width, 0, codedImgSize);
-			let v1 = map(doodle[0][1], 0, width, 0, codedImgSize);
+			let v0 = map(doodle[0][0], 0, width, 0, w);
+			let v1 = map(doodle[0][1], 0, height, 0, h);
 			graphics.curveVertex(v0, v1);
 			for (let v of doodle) {
-				const v0 = map(v[0], 0, width, 0, codedImgSize);
-				const v1 = map(v[1], 0, width, 0, codedImgSize);
+				const v0 = map(v[0], 0, width, 0, w);
+				const v1 = map(v[1], 0, height, 0, h);
 				graphics.curveVertex(v0, v1);
 			}
-			v0 = map(doodle[doodle.length-1][0], 0, width, 0, codedImgSize);
-			v1 = map(doodle[doodle.length-1][1], 0, width, 0, codedImgSize);
+			v0 = map(doodle[doodle.length-1][0], 0, width, 0, w);
+			v1 = map(doodle[doodle.length-1][1], 0, height, 0, h);
 			graphics.curveVertex(v0,v1);
 			graphics.endShape();
 		}
@@ -159,22 +165,13 @@ function drawMiniature(graphics, layersData) {
 }
 
 async function decodeImage(dataUrl) {
-	const img = await new Promise(resolve => {
-		loadImage(dataUrl, d => {
-			resolve(d);
-		})
-	});
-	const graphics = createGraphics(codedImgSize, codedImgSize);
-	graphics.image(img, 0, 0);
-	const canvas = graphics.elt
-  const context = canvas.getContext("2d");
-	const imageDataObject = context.getImageData(0, 0, codedImgSize, codedImgSize);
-	const imageData = imageDataObject.data;
+	const img = await new Promise(r => {loadImage(dataUrl, d => {r(d)})});
+	const imageData = img.drawingContext.getImageData(0, 0, codedImgSize, codedImgSize).data;
 
 	const decomp = [];
-	for (let index = 0; index < imageData.length; index += 4) {
-		for (let i = 0; i < 3; i++) {
-			bin = imageData[index + i].toString(2).padStart(8, '0');
+	for (let i = 0; i < imageData.length; i++) {
+		if ((i + 1) % 4 !== 0) {
+			bin = imageData[i].toString(2).padStart(8, '0');
 			decomp.push(bin.slice(-4));
 		}
   }
@@ -188,6 +185,7 @@ async function decodeImage(dataUrl) {
 	}
 	
 	decoded = decoded.split('!END!END!')[0];
+
 	decoded = atob(decoded);
 	return JSON.parse(decoded)
 }
