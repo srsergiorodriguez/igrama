@@ -23,10 +23,11 @@ let currentColor = '#000000';
 
 async function setup() {
 	select('footer').html(`${version} por Sergio Rodríguez Gómez`);
-	background(255);
+	noCanvas();
+	
 
 	const newStructureDiv = createDiv('').class('new-struct').parent('#gui');
-	createP('Arrastra aquí una estructura...').class('info').parent(newStructureDiv);
+	createP('Arrastra aquí una estructura...').class('info-text').parent(newStructureDiv);
 
 	const params = getURLParams();
 	let file;
@@ -52,7 +53,9 @@ async function setup() {
 }
 
 function start(file) {
-	cnv = createCanvas(file.metadata.width, file.metadata.height).parent('#canvas');
+	cnv = createCanvas(file.metadata.width, file.metadata.height).parent('#canvas').style('visibility', 'visible');
+	background(255);
+	
 	sectionsN = file.metadata.sectionsN;
 
 	sectionsNames = file.metadata.sectionsNames;
