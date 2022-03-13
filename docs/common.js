@@ -53,6 +53,17 @@ function saveJSON(obj, filename) {
 	document.body.removeChild(a);
 }
 
+function saveTXT(obj, filename) {
+	const a = document.createElement("a");
+	a.href = URL.createObjectURL(new Blob([JSON.stringify(obj, null, 2)], {
+		type: "text/plain"
+	}));
+	a.setAttribute("download", `${filename}.txt`);
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+}
+
 function encodeToImage(data, layersData = false) {
 	selectAll('.coded-miniature').forEach(d => d.remove());
 
