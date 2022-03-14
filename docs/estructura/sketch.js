@@ -276,8 +276,6 @@ function updateAdjust() {
 				section.style('width', floor(sectionsData[i].w)  + 'px');
 				section.style('height', floor(sectionsData[i].h) + 'px');
 				if (!mouseIsPressed) {clearInterval(interval)}
-
-				select('#debug-span').html(`new:${floor(newW)}/${floor(newH)}<br>fix${floor(refX)}/${floor(refY)}`)
 			}, 100);			
 		} else {
 			// MOVIENDO
@@ -301,14 +299,20 @@ function updateAdjust() {
 	section.mousePressed(function() {
 		adjustAction();
 	}).touchStarted(function(e) {
-		fixedX = e.touches[0].pageX;
-		fixedY = e.touches[0].pageY;
-		movedX = e.touches[0].pageX;
-		movedY = e.touches[0].pageY;
+		const {x, y, top} = cnv.elt.getBoundingClientRect();
+		const Yoff = window.scrollY || window.pageYOffset;
+		const Xoff = window.scrollX || window.pageXOffset;
+		fixedX = e.touches[0].pageX - x - Xoff;
+		fixedY = e.touches[0].pageY - y - Yoff;
+		movedX = e.touches[0].pageX - x - Xoff;
+		movedY = e.touches[0].pageY - y - Yoff;
 		adjustAction(e);
 	}).touchMoved(function(e) {
-		movedX = e.touches[0].pageX;
-		movedY = e.touches[0].pageY;
+		const {x, y} = cnv.elt.getBoundingClientRect();
+		const Yoff = window.scrollY || window.pageYOffset;
+		const Xoff = window.scrollX || window.pageXOffset;
+		movedX = e.touches[0].pageX - x - Xoff;
+		movedY = e.touches[0].pageY - y - Yoff;
 	});
 
 	let isCorner = false;
