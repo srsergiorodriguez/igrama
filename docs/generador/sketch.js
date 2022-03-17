@@ -118,7 +118,7 @@ function gui() {
 
 	createButton(`${iconImg(downloadIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {
 		const grammar = getGrammar();
-		saveTXT(grammar, 'igrama');
+		saveJSON(grammar, 'igrama');
 	});
 }
 
