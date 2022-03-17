@@ -140,7 +140,7 @@ function gui() {
 
 	createButton(`${iconImg(downloadIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {
 		const grammar = getGrammar();
-		//saveJSON(grammar, 'igrama');
+		saveJSON(grammar, 'igrama');
 		const grammarCodified = btoa(JSON.stringify(grammar, null, 2));
 		const dataUrl = encodeToImage(grammarCodified, layersData);
 		createImg(dataUrl, "").class('coded-miniature').parent(guiCont);
