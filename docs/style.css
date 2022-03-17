@@ -1,10 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Comfortaa&display=swap');
 
 :root {
-  /* SLIDERS */
-  --frame: #ffadad;
-  --toolbar: rgb(255, 250, 250);
-  /* --toolbar: #1d2d36; */
+  /* --frame: #ffadad;
+  --toolbar: rgb(255, 250, 250); */
+  --frame: #b1d3db;
+  --toolbar: white;
   --active: #666666;
   --hover: #cccccc;
   --btn: #ffffff;
