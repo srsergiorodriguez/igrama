@@ -199,30 +199,27 @@ function getLayers2(layers) {
 }
 
 function getGif() {
-	const g1 = createGraphics(s,s);
-	const g2 = createGraphics(s,s);
-	const gif = new GIF({
-		workers: 2,
-		quality: 10
-	});
+	const g1 = createGraphics(width, height);
+	const g2 = createGraphics(width, height);
 	g1.image(get(), 0, 0);
 	const layers2 = getLayers2(layers);
 	drawLayers(layers2);
 	g2.image(get(), 0, 0);
 	drawLayers(layers);
-	gif.addFrame(g1.elt, {delay: frameDelay});
-	gif.addFrame(g2.elt, {delay: frameDelay});
-	gif.on('finished', function(blob) {
-		const a = document.createElement("a");
-		a.href = URL.createObjectURL(blob);
-		a.setAttribute("download", `igramaImg.gif`);
-		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);			
-		g1.remove();
-		g2.remove();
-	});
-	gif.render();
+
+	const gif = new MiniGif({
+    colorResolution: 3,
+    delay: frameDelay / 10,
+    customPalette: hexToRGB(palette)
+  });
+
+  gif.addFrame(g1.elt);
+	gif.addFrame(g2.elt);
+
+  const buffer = gif.makeGif();
+  gif.download(buffer);
+	g1.remove();
+	g2.remove();
 }
 
 function getGrammar() {
