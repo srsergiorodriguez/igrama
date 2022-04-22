@@ -214,7 +214,7 @@ function getGif() {
 	const gif = new MiniGif({
     colorResolution: 3,
     delay: frameDelay / 10,
-    customPalette: hexToRGB(palette)
+    customPalette: hexToRGB(palette) // tal vez hacer que se use la paleta full en caso de usar fondo
   });
 
   gif.addFrame(g1.elt);
@@ -233,7 +233,8 @@ function getGrammar() {
 			sectionsNames,
 			attributes,
 			width,
-			height
+			height,
+			bg
 		},
 		grammar,
 		sections: sectionsData,
