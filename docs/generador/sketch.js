@@ -123,6 +123,9 @@ function gui() {
 	createButton(`${iconImg(downloadIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {
 		const grammar = getGrammar();
 		saveJSON(grammar, 'igrama');
+		const grammarCodified = btoa(JSON.stringify(grammar, null, 2));
+		const dataUrl = encodeToImage(grammarCodified);
+		createImg(dataUrl, "").class('coded-miniature').parent(guiCont);
 	});
 }
 
