@@ -1,4 +1,4 @@
-const version = "1.2.1";
+const version = "1.2.2";
 
 const maxSections = 10;
 const sketchColor = '#00ffff';
@@ -27,7 +27,8 @@ function decodeSketch(data) {
 }
 
 function showSketch() {
-	background(255);
+	clear();
+	background(bg);
 	noFill();
 	stroke(sketchColor);
 	strokeWeight(sketchWeight);

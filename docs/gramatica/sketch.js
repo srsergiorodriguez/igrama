@@ -20,10 +20,12 @@ SKETCH -- DIBUJO DE REFERENCIA QUE ESTÁ POR DEBAJO DE TODO
 let currentWeight = 4;
 const maxWeight = 50;
 let currentColor = '#000000';
+let bg; // background
 
 async function setup() {
 	select('footer').html(`${version} por Sergio Rodríguez Gómez`);
 	noCanvas();
+	strokeJoin(ROUND);
 
 	const newStructureDiv = createDiv('').class('new-struct').parent('#gui');
 	createP('Arrastra aquí una estructura...').class('info-text').parent(newStructureDiv);
@@ -53,7 +55,9 @@ async function setup() {
 
 function start(file) {
 	cnv = createCanvas(file.metadata.width, file.metadata.height).parent('#canvas').style('visibility', 'visible');
-	background(255);
+	
+	bg = file.metadata.bg || '#FFFFFF';
+	background(bg);
 
 	sectionsN = file.metadata.sectionsN;
 
@@ -217,7 +221,7 @@ function updateDoodles() {
 }
 
 function drawLayers(layers) {
-	background(255);
+	background(bg);
 	showSketch();
 	noFill();
 	for (let layer of layers) {
@@ -293,6 +297,7 @@ function getGrammar() {
 			attributes,
 			width,
 			height,
+			bg
 		},
 		sections: sectionsData,
 		grammar: {

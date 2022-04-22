@@ -1,4 +1,4 @@
-let width = 10, height = 10;
+let width = 10, height = 10, bg = '#FFFFFF';
 let cnv;
 let sectionsN;
 let sectionsNames = [];
@@ -13,6 +13,17 @@ function setup() {
 	select('footer').html(`${version} por Sergio Rodríguez Gómez`);
 	noCanvas();
 	strokeJoin(ROUND);
+
+	const params = getURLParams();
+	if (params.bg !== undefined) {
+		if (params.bg === 'trans') {
+			bg = '#FF000000';
+		} else {
+			bg = '#'+params.bg;
+		}
+	}
+
+	
 
 	const newStructureDiv = createDiv('').class('new-struct').parent('#gui');
 	createP('Escoge las dimensiones:').class('info-text').parent(newStructureDiv);
@@ -60,7 +71,8 @@ function getModel() {
 			sectionsNames,
 			attributes,
 			width,
-			height
+			height,
+			bg
 		},
 		sections: sectionsData,
 		sketch: btoa(sketch.map(doodle => doodle.toString()).join('**'))
@@ -83,7 +95,7 @@ function randomSections() {
 
 function gui() {
 	cnv = createCanvas(width, height).parent('#canvas').style('visibility', 'visible');
-	background(255);
+	background(bg);
 
 	selectAll('.gui-container').forEach(d => d.remove());
 	selectAll('.new-struct').forEach(d => d.remove());
@@ -136,7 +148,7 @@ function gui() {
 	createButton(`${iconImg(bombIcon)}`).class('action-btn').parent(emojiBtns).mouseClicked(() => {
 		sketch = [];
 		undoStack = [];
-		background(255);
+		background(bg);
 	});
 
 	createButton(`${iconImg(downloadIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {

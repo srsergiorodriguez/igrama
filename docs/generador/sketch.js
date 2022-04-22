@@ -14,12 +14,14 @@ const frameDelay = 350;
 
 let currentWeight = 4;
 let currentColor = '#000000';
+let bg; // background
 
 const imgsMemo = {};
 
 async function setup() {
 	select('footer').html(`${version} por Sergio Rodríguez Gómez`);
 	noCanvas();
+	strokeJoin(ROUND);
 	select('#text-overlay').hide();
 
 	// DROP MODEL
@@ -49,7 +51,9 @@ async function setup() {
 function start(file) {
 	selectAll('.new-struct').forEach(d => d.remove());
 	cnv = createCanvas(file.metadata.width, file.metadata.height).parent('#canvas').style('visibility', 'visible');
-	background(255);
+	
+	bg = file.metadata.bg || '#FFFFFF';
+	background(bg);
 
 	sectionsN = file.metadata.sectionsN;
 	sectionsNames = file.metadata.sectionsNames;
@@ -123,7 +127,7 @@ function gui() {
 }
 
 async function drawLayers(layers) {
-	background(255);
+	background(bg);
 	noFill();
 	for (let [index, layer] of layers.entries()) {
 		const {w, h, x, y} = sectionsData[index];
