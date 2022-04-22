@@ -23,8 +23,6 @@ function setup() {
 		}
 	}
 
-	
-
 	const newStructureDiv = createDiv('').class('new-struct').parent('#gui');
 	createP('Escoge las dimensiones:').class('info-text').parent(newStructureDiv);
 
