@@ -190,7 +190,7 @@ function updateSketch() {
 		const doodle = [];
 		if (drawingSketch === true) {
 			let interval = setInterval(() => {
-				doodle.push([mouseX, mouseY]);
+				doodle.push([floor(mouseX), floor(mouseY)]);
 				if (doodle.length >= 2) {
 					const x1 = doodle[doodle.length - 1][0];
 					const x2 = doodle[doodle.length - 2][0];

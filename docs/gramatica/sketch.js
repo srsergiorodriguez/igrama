@@ -187,7 +187,7 @@ function updateDoodles() {
 		const doodle = [];
 		interval = setInterval(() => {
 			if (checkLimits(section)) {
-				doodle.push([mouseX, mouseY]);
+				doodle.push([floor(mouseX), floor(mouseY)]);
 			} else {
 				recordDoodle();
 			}

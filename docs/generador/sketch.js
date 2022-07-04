@@ -124,7 +124,18 @@ function gui() {
 		const grammar = getGrammar();
 		saveJSON(grammar, 'igrama');
 		const grammarCodified = btoa(JSON.stringify(grammar, null, 2));
-		const dataUrl = encodeToImage(grammarCodified);
+		const miniLayers = layers.map(l => {
+			const ll = l.content.map(d => {
+				const doodle = d;
+				doodle.color = d.color;
+				doodle.weight = d.weight;
+				return doodle
+			});
+			const mini = [ll];
+			mini.attribute = l.attribute;
+			return mini
+		})
+		const dataUrl = encodeToImage(grammarCodified, miniLayers);
 		createImg(dataUrl, "").class('coded-miniature').parent(guiCont);
 	});
 }
