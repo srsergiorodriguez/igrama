@@ -1,16 +1,13 @@
 let cnv; // canvas
-let sectionsN; // Number of sections
-let sectionsNames; // Names of sections
-let sectionsData = []; // Position and size of sections
+let model;
 
-let attributes; // Booleans about sections requiring attributes
 const attributesData = [];
-
-let sketch = []; // Guide drawing
+let sketch = []; // Guide drawing decoded
 
 const layers = []; // Contains current drawing
 const layersData = []; // Contains all drawings
 const undoStacks = [];
+
 /*
 LAYER -- DATOS DEL DIBUJO CON VECTOR
 SECTION -- ESPACIO DONDE PUEDE DIBUJARSE (PARA HACER UNA LAYER)
@@ -20,7 +17,6 @@ SKETCH -- DIBUJO DE REFERENCIA QUE ESTÁ POR DEBAJO DE TODO
 let currentWeight = 4;
 const maxWeight = 50;
 let currentColor = '#000000';
-let bg; // background
 
 async function setup() {
 	select('footer').html(`${version} por Sergio Rodríguez Gómez`);
@@ -28,8 +24,8 @@ async function setup() {
 	strokeJoin(ROUND);
 
 	const newStructureDiv = createDiv('').class('new-struct').parent('#gui');
-	createP('Arrastra aquí una estructura...').class('info-text').parent(newStructureDiv);
 
+	// Ajustar parámetros
 	const params = getURLParams();
 	let file;
 	if (params.model === 'local') {
@@ -42,30 +38,31 @@ async function setup() {
 		start(file);
 	}
 
-	select('#gui').drop((f) => {
-		if (f.subtype === 'json' || f.subtype === 'plain') {
-			const file = f.subtype === 'json' ? f.data : JSON.parse(f.data);
-			start(file);
-			newStructureDiv.remove();
-		} else {
-			alert("El archivo no es compatible");
-		}
-	});
+	// Para subir modelo
+	createP('Carga un modelo:').class('info-text').parent(newStructureDiv);
+	createFileInput(handleFile).class('fileinput').id('fileinput').parent(newStructureDiv);
+	createElement('label','Buscar').class('fileinput-label').attribute('for', 'fileinput').parent(newStructureDiv);
+	
+	// Para arrastrar un modelo
+	createP('o arrastra aquí un modelo...').class('info-text').parent(newStructureDiv);
+	select('#gui').drop(handleFile);
+}
+
+function handleFile(file) {
+	if (file.subtype === 'json' || file.subtype === 'plain') {
+		const data = file.subtype === 'json' ? file.data : JSON.parse(file.data);
+		start(data);
+		selectAll('.new-struct').forEach(d => d.remove());
+	} else {
+		alert("El archivo no es compatible");
+	}
 }
 
 function start(file) {
 	cnv = createCanvas(file.metadata.width, file.metadata.height).parent('#canvas').style('visibility', 'visible');
-	
-	bg = file.metadata.bg || '#FFFFFF';
-	background(bg);
-
-	sectionsN = file.metadata.sectionsN;
-
-	sectionsNames = file.metadata.sectionsNames;
-	sectionsData = file.sections;
-	attributes = file.metadata.attributes;
+	model = file;
 	sketch = decodeSketch(file.sketch);
-	for (let i = 0; i < sectionsN; i++) {
+	for (let i = 0; i < model.metadata.sectionsN; i++) {
 		layers[i] = [];
 		layersData[i] = [];
 		undoStacks[i] = [];
@@ -82,8 +79,8 @@ function gui() {
 	// SECTIONS
 	const sectionsDiv = createDiv('').class('sections-container').parent(guiCont);
 
-	for (let i = sectionsN - 1; i >= 0; i--) {
-		createButton(sectionsNames[i]).class('section-btn').parent(sectionsDiv).mouseClicked(function () {
+	for (let i = model.metadata.sectionsN - 1; i >= 0; i--) {
+		createButton(model.metadata.sectionsNames[i]).class('section-btn').parent(sectionsDiv).mouseClicked(function () {
 			selectAll('.section-btn').forEach(d => {
 				d.removeClass('selected')
 			});
@@ -131,7 +128,7 @@ function gui() {
 			undoStacks[index] = [];
 			drawLayers(layers);
 		}
-		if (attributes[index]) {
+		if (model.metadata.attributes[index]) {
 			attributePrompt((attribute) => {
 				layers[index].attribute = attribute;
 				addLayer();
@@ -177,7 +174,7 @@ function gui() {
 
 	showSections(0);
 	updateDoodles();
-	selectAll('.section-btn')[sectionsN - 1].addClass('selected');
+	selectAll('.section-btn')[model.metadata.sectionsN - 1].addClass('selected');
 }
 
 function updateDoodles() {
@@ -214,6 +211,7 @@ function updateDoodles() {
 			simpleDoodle.weight = currentWeight;
 			const i = +section.attribute('i');
 			layers[i].push(simpleDoodle);
+			undoStacks[i] = [];
 			drawLayers(layers);
 		}
 	};
@@ -221,7 +219,7 @@ function updateDoodles() {
 }
 
 function drawLayers(layers) {
-	background(bg);
+	background(model.metadata.bg);
 	showSketch();
 	noFill();
 	for (let layer of layers) {
@@ -252,7 +250,7 @@ function showSections(i) {
 	selectAll('.non-adjustable-section').map(d=>d.remove());
 	selectAll('.adjustable-section').map(d=>d.remove());
 
-	for (let j = 0; j < sectionsN; j++) {
+	for (let j = 0; j < model.metadata.sectionsN; j++) {
 		if (j !== i || i === undefined) {
 			showNonAdjustableSection(j);
 		}
@@ -264,7 +262,8 @@ function showSections(i) {
 }
 
 function showNonAdjustableSection(i) {
-	createDiv(sectionsNames[i])
+	const sectionsData = model.sections;
+	createDiv(model.metadata.sectionsNames[i])
 		.class('non-adjustable-section')
 		.style('width', sectionsData[i].w + 'px')
 		.style('height', sectionsData[i].h + 'px')
@@ -274,8 +273,9 @@ function showNonAdjustableSection(i) {
 }
 
 function showAdjustableSection(i) {
+	const sectionsData = model.sections;
 	selectAll('.adjustable-section').map(d=>d.remove());
-	createDiv(sectionsNames[i])
+	createDiv(model.metadata.sectionsNames[i])
 		.class('adjustable-section')
 		.attribute('i', i)
 		.attribute('w', sectionsData[i].w)
@@ -290,21 +290,6 @@ function showAdjustableSection(i) {
 }
 
 function getGrammar() {
-	const modelData = {
-		metadata: {
-			sectionsN,
-			sectionsNames,
-			attributes,
-			width,
-			height,
-			bg
-		},
-		sections: sectionsData,
-		grammar: {
-			base: ['']
-		},
-		sketch: btoa(sketch.map(doodle => doodle.toString()).join('**'))
-	}
 	/*
 	layersData
 	capa1: layer
@@ -314,18 +299,17 @@ function getGrammar() {
 
 	coding: hex & weight & vx,vy... ** hex & weight & vx,vy... (%% drawingDelimiter) attribute
 	*/
-	const baseBranches = [];
-	for (let i = 0; i < sectionsN; i++) {
-		baseBranches.push(`<${sectionsNames ? sectionsNames[i] : i}>`);
+	const newData = {};
+	for (let i = 0; i < model.metadata.sectionsN; i++) {
 		// FOR EACH DRAWING
-		modelData.grammar[sectionsNames ? sectionsNames[i] : i] = layersData[i].map(drawing => {
+		newData[model.metadata.sectionsNames[i]] = layersData[i].map(drawing => {
 			const vector = drawing.map(doodle => `${doodle.color}&${doodle.weight}&${doodle.toString()}`).join('**');
 			const vectorAndAttribute = `vector${drawingDelimiter}${vector}${drawingDelimiter}${drawing.attribute}`;
 			return vectorAndAttribute
 		});
 	}
-	modelData.grammar.base[0] = baseBranches.join('|');
-	return modelData
+	Object.assign(model.grammar, newData);
+	return model
 }
 
 function attributePrompt(callback) {

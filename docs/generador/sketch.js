@@ -1,32 +1,15 @@
 let cnv;
-let sectionsN;
-let sectionsNames; // Names of sections
-let attributes; // Booleans about sections requiring attributes
-let sketch = [];
-let sectionsData = [];
-let grammar = {}; // Contains all drawings
-let layers = []; // Contains current drawing
-let layers2; // For squiggle animation
+let model;
 let aventura;
-let squigInterval;
-
-const frameDelay = 350;
-
-let currentWeight = 4;
-let currentColor = '#000000';
-let bg; // background
-
-const imgsMemo = {};
+let format = 'png';
+let layers;
 
 async function setup() {
 	select('footer').html(`${version} por Sergio Rodríguez Gómez`);
 	noCanvas();
-	strokeJoin(ROUND);
 	select('#text-overlay').hide();
 
-	// DROP MODEL
 	const newStructureDiv = createDiv('').class('new-struct').parent('#gui');
-	createP('Arrastra aquí una gramática').class('info-text').parent(newStructureDiv);
 
 	const params = getURLParams();
 	if (params.model === 'local') {
@@ -34,57 +17,59 @@ async function setup() {
 		start(file);
 	}
 
-	select('#gui').drop(async (f) => {
-		if (f.subtype === 'json' || f.subtype === 'plain') {
-			const data = f.subtype === 'json' ? f.data : JSON.parse(f.data);
-			start(data);
-		} else if (f.subtype === 'png') {
-			const dataUrl = f.data;
-			const data = await decodeImage(dataUrl);
-			start(data);
-		} else {
-			alert("El archivo no es compatible");
-		}
-	});
+	// Para subir modelo
+	createP('Carga un modelo:').class('info-text').parent(newStructureDiv);
+	createFileInput(handleFile).class('fileinput').id('fileinput').parent(newStructureDiv);
+	createElement('label','Buscar').class('fileinput-label').attribute('for', 'fileinput').parent(newStructureDiv);
+
+	// Para arrastrar un modelo
+	createP('o arrastra aquí un modelo...').class('info-text').parent(newStructureDiv);
+	select('#gui').drop(handleFile);
+}
+
+async function handleFile(file) {
+	if (file.subtype === 'json' || file.subtype === 'plain') {
+		const data = file.subtype === 'json' ? file.data : JSON.parse(file.data);
+		start(data);
+	} else if (file.subtype === 'png') {
+		const dataUrl = file.data;
+		const data = await decodeImage(dataUrl);
+		start(data);
+	} else {
+		alert("El archivo no es compatible");
+	}
 }
 
 function start(file) {
 	selectAll('.new-struct').forEach(d => d.remove());
-	cnv = createCanvas(file.metadata.width, file.metadata.height).parent('#canvas').style('visibility', 'visible');
-	
-	bg = file.metadata.bg || '#FFFFFF';
-	background(bg);
-
-	sectionsN = file.metadata.sectionsN;
-	sectionsNames = file.metadata.sectionsNames;
-	sectionsData = file.sections;
-	attributes = file.attributes;
-	sketch = decodeSketch(file.sketch);
-	grammar = file.grammar;
+	model = file;
+	select('#canvas')
+		.style('width',file.metadata.width+'px')
+		.style('height',file.metadata.height+'px');
 
 	aventura = new Aventura();
-	aventura.setGrammar(grammar);
+	aventura.setIgrama(file);
 	expand();
 	gui();
 }
 
 function expand() {
-	layers = aventura.expandGrammar('base').split('|').map(drawing => decodeDrawing(drawing));
-	const text = layers.map(d => d.attribute).reverse().join(' ');
-	if (text.length > layers.length) {
+	const children = [...document.getElementById('canvas').childNodes];
+	children.map(e => e.remove());
+
+	layers = aventura.expandIgrama('base');
+	const text = aventura.getIgramaText(layers);
+	if (text.replace(/\s/g,'').length > 0) {
 		select('#text-overlay').show().html(text);
 	} else {
 		select('#text-overlay').hide();
 	}
-	
-	layers2 = getLayers2(layers);
-	drawLayers(layers);
+
+	aventura.showIgrama(layers, format, 'canvas');
 }
 
 function gui() {
 	selectAll('.gui-container').map(d => d.remove());
-	clearInterval(squigInterval);
-
 	const guiCont = createDiv('').class('gui-container').parent('#gui');
 
 	// ACTIONS & TOOLS
@@ -98,161 +83,28 @@ function gui() {
 	const wiggleBtn = createButton(`${iconImg(wiggleIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(function () {
 		checked = !checked;
 		if (checked) {
-			let step = 0;
-			squigInterval = setInterval(() => {
-				drawLayers(step % 2 === 0 ? layers : layers2);
-				step++;
-			}, frameDelay);
+			format = 'gif';
 			wiggleBtn.addClass('toggled-btn');
 		} else {
-			clearInterval(squigInterval);
-			drawLayers(layers);	
+			format = 'png';
 			wiggleBtn.removeClass('toggled-btn');
 		}
-		
+		const children = [...document.getElementById('canvas').childNodes];
+		children.map(e => e.remove());
+		aventura.showIgrama(layers, format, 'canvas');
 	});
 
-	createButton(`${iconImg(pngIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {
-		save(cnv, 'igramaImg.png');
-	});
+	// createButton(`${iconImg(pngIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(async () => {
+	// 	const dataUrl = await aventura.igramaDataUrl(layers, 'png');
+	// 	downloadImg(dataUrl, 'igramaimg.png');
+	// });
 
-	createButton(`${iconImg(gifIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {
-		getGif();
-	});
+	// createButton(`${iconImg(gifIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(async () => {
+	// 	const dataUrl = await aventura.igramaDataUrl(layers, 'gif');
+	// 	downloadImg(dataUrl, 'igramaimg.gif');
+	// });
 
 	createButton(`${iconImg(downloadIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {
-		const grammar = getGrammar();
-		saveJSON(grammar, 'igrama');
-		const grammarCodified = btoa(JSON.stringify(grammar, null, 2));
-		const miniLayers = layers.map(l => {
-			const ll = l.content.map(d => {
-				const doodle = d;
-				doodle.color = d.color;
-				doodle.weight = d.weight;
-				return doodle
-			});
-			const mini = [ll];
-			mini.attribute = l.attribute;
-			return mini
-		})
-		const dataUrl = encodeToImage(grammarCodified, miniLayers);
-		createImg(dataUrl, "").class('coded-miniature').parent(guiCont);
+		saveJSON(model, 'igrama');
 	});
-}
-
-async function drawLayers(layers) {
-	background(bg);
-	noFill();
-	for (let [index, layer] of layers.entries()) {
-		const {w, h, x, y} = sectionsData[index];
-		if (layer.type === 'url') {
-			if (imgsMemo[layer.content] === undefined) {
-				imgsMemo[layer.content] = await new Promise(resolve => {loadImage(layer.content, d => {resolve(d)})});
-			}
-			image(imgsMemo[layer.url], x, y, w, h);
-		} else if (layer.type === 'vector') {
-			for (let doodle of layer.content) {
-				if (doodle.length === 0) continue
-				stroke(doodle.color);
-				strokeWeight(doodle.weight);
-				beginShape();
-				curveVertex(doodle[0][0],doodle[0][1]);
-				for (let v of doodle) {
-					curveVertex(v[0],v[1]);
-				}
-				curveVertex(doodle[doodle.length-1][0],doodle[doodle.length-1][1]);
-				endShape();
-			}
-		}
-	}	
-}
-
-function decodeDrawing(data) {
-	if (data === '') {
-		return []
-	}
-	const [type, content, attribute] = data.split(drawingDelimiter);
-	let decoded = {};
-	if (type === 'vector') {
-		decoded.content = content.split('**').map(doodle => {
-			const [color, weight, v] = doodle.split('&');
-			const xy = [];
-			xy.color = color;
-			xy.weight = weight;
-			if (v === undefined) return xy
-			const flat = v.split(',');
-			for (let i = 0; i < flat.length; i += 2) {
-				xy.push([+flat[i], +flat[i + 1]])
-			}
-			return xy
-		});
-	} else {
-		decoded.content = content
-	}
-	decoded.attribute = attribute;
-	decoded.type = type;
-	return decoded
-}
-
-function getLayers2(layers) {
-	const r = 3;
-	const layers2 = JSON.parse(JSON.stringify(layers));
-	for (let [i, layer] of layers2.entries()) {
-		if (layer.type === 'vector') {
-			for (let [j, doodle] of layer.content.entries()) {
-				for (let [k, v] of doodle.entries()) {
-					let rnd = random(1);
-					if (rnd < 0.5) {
-						v[0] += int(random(-r, r));
-					} else {
-						v[1] += int(random(-r, r));	
-					}
-				}
-				doodle.color = layers[i].content[j].color;
-				doodle.weight = layers[i].content[j].weight;
-			}
-		}
-	}
-	return layers2
-}
-
-function getGif() {
-	const g1 = createGraphics(width, height);
-	const g2 = createGraphics(width, height);
-	g1.image(get(), 0, 0);
-	const layers2 = getLayers2(layers);
-	drawLayers(layers2);
-	g2.image(get(), 0, 0);
-	drawLayers(layers);
-
-	const gif = new MiniGif({
-    colorResolution: 3,
-    delay: frameDelay / 10,
-    customPalette: hexToRGB(palette) // tal vez hacer que se use la paleta full en caso de usar fondo
-  });
-
-  gif.addFrame(g1.elt);
-	gif.addFrame(g2.elt);
-
-  const buffer = gif.makeGif();
-  gif.download(buffer);
-	g1.remove();
-	g2.remove();
-}
-
-function getGrammar() {
-	const modelData = {
-		metadata: {
-			sectionsN,
-			sectionsNames,
-			attributes,
-			width,
-			height,
-			bg
-		},
-		grammar,
-		sections: sectionsData,
-		sketch: btoa(sketch.map(doodle => doodle.toString()).join('**'))
-	}
-	return modelData
 }

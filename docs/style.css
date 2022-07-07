@@ -3,7 +3,7 @@
 :root {
   /* --frame: #ffadad;
   --toolbar: rgb(255, 250, 250); */
-  --frame: #b1d3db;
+  --frame: #c1d9db;
   --toolbar: white;
   --active: #666666;
   --hover: #cccccc;
@@ -41,6 +41,23 @@ footer {
 
 .select {
   width: 100%;
+}
+
+
+/* file input */
+
+.fileinput {
+  display: none;
+}
+
+.fileinput-label {
+  background: var(--btn);
+  color: var(--font);
+  border: solid 1px rgb(82, 82, 82);
+  padding: 5px;
+  font-size: 12px;
+  width: 100%;
+  cursor: pointer;
 }
 
 #general {

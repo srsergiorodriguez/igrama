@@ -1,8 +1,11 @@
-const version = "1.2.2";
+const version = "1.5.0";
 
 const maxSections = 10;
 const sketchColor = '#00ffff';
 const sketchWeight = 4;
+
+const codedImgSize = 512;
+const drawingDelimiter = '%%';
 
 const palette = [
 	"#FFFFFF", "#bdbdbd", "#595959", "#000000",
@@ -10,9 +13,6 @@ const palette = [
 	"#FF4136", "#FF6565", "#ff6bd3", "#a243de",
 	"#914a29", "#ff8400", "#f0ae67", "#FFE923"
 ];
-
-const codedImgSize = 512;
-const drawingDelimiter = '%%';
 
 function decodeSketch(data) {
 	let decoded = atob(data).split('**').map(doodle => {
@@ -28,7 +28,7 @@ function decodeSketch(data) {
 
 function showSketch() {
 	clear();
-	background(bg);
+	background(model.metadata.bg || bg); /// OJOOO
 	noFill();
 	stroke(sketchColor);
 	strokeWeight(sketchWeight);
@@ -43,11 +43,20 @@ function showSketch() {
 	}
 }
 
+// function saveJSON2(obj, filename) {
+// 	const a = document.createElement("a");
+// 	a.href = URL.createObjectURL(new Blob([JSON.stringify(obj, null, 2)], {
+// 		type: "text/plain"
+// 	}));
+// 	a.setAttribute("download", `${filename}.json`);
+// 	document.body.appendChild(a);
+// 	a.click();
+// 	document.body.removeChild(a);
+// }
+
 function saveJSON(obj, filename) {
 	const a = document.createElement("a");
-	a.href = URL.createObjectURL(new Blob([JSON.stringify(obj, null, 2)], {
-		type: "text/plain"
-	}));
+	a.href = "data:text/json;," + JSON.stringify(obj)
 	a.setAttribute("download", `${filename}.json`);
 	document.body.appendChild(a);
 	a.click();
@@ -69,7 +78,6 @@ function encodeToImage(data, layersData = false) {
 	selectAll('.coded-miniature').forEach(d => d.remove());
 
 	const str = data + "!END!END!";
-	// const utf = (ch) => ch !== undefined ? ch.charCodeAt(0) : 32;
 	const utf = (ch) => ch.charCodeAt(0);
   const w = codedImgSize;
 	const h = floor((codedImgSize * height) / width);
@@ -203,3 +211,11 @@ function hexToRGB(arr) {
 		return [r, g, b, 255];
 	})
 }
+
+function downloadImg(dataUrl, filename) {
+  const link = document.createElement("a");
+  link.href = dataUrl;
+  link.download = filename;
+  link.click();
+	link.remove();
+};

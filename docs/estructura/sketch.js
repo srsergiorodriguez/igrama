@@ -1,12 +1,16 @@
-let width = 10, height = 10, bg = '#FFFFFF';
 let cnv;
-let sectionsN;
-let sectionsNames = [];
-let attributes = [];
+let model = {
+	metadata: {
+		width: 128,
+		height: 128,
+		bg: '#FFFFFF',
+		sectionsNames: [],
+		attributes: []
+	},
+	sections: []
+}
 let sketch = [];
 let undoStack = [];
-let sectionsData = [];
-
 let drawingSketch = true;
 
 function setup() {
@@ -14,15 +18,17 @@ function setup() {
 	noCanvas();
 	strokeJoin(ROUND);
 
+	// Ajustar parámetros
 	const params = getURLParams();
 	if (params.bg !== undefined) {
 		if (params.bg === 'trans') {
-			bg = '#FF000000';
+			model.metadata.bg = '#FF000000';
 		} else {
-			bg = '#'+params.bg;
+			model.metadata.bg = '#'+params.bg;
 		}
 	}
 
+	// Selector de dimensiones
 	const newStructureDiv = createDiv('').class('new-struct').parent('#gui');
 	createP('Escoge las dimensiones:').class('info-text').parent(newStructureDiv);
 
@@ -31,59 +37,63 @@ function setup() {
 	const dimYInput = createInput('400','number').class('dim-input')
 		.attribute('max',3000).attribute('min',128).parent(newStructureDiv);
 
+	// Selector de secciones
 	createP('y el número de secciones:').class('info-text').parent(newStructureDiv);
 	const sectionSelector = createSelect().class('select').parent(newStructureDiv).changed(() => {
-		sectionsN = +sectionSelector.value();
-		width = +dimXInput.value();
-		height = +dimYInput.value();
+		model.metadata.sectionsN = +sectionSelector.value();
+		model.metadata.width = +dimXInput.value();
+		model.metadata.height = +dimYInput.value();
 		randomSections();
 		gui();
 	});
-	
-
 	for (let i = 1; i <= maxSections; i++) {
 		sectionSelector.option(i === 1 ? 'Selecciona...' : i);
 	}
+
+	// Para subir modelo
+	createP('o carga un modelo:').class('info-text').parent(newStructureDiv);
+	createFileInput(handleFile).class('fileinput').id('fileinput').parent(newStructureDiv);
+	createElement('label','Buscar').class('fileinput-label').attribute('for', 'fileinput').parent(newStructureDiv);
+
+	// Para arrastrar modelo
 	createP('...o arrastra aquí un modelo').class('info-text').parent(newStructureDiv);
 
-	select('#gui').drop((file) => {
-		if (file.subtype === 'json' || file.subtype === 'plain') {
-			const f = file.subtype === 'json' ? file.data : JSON.parse(file.data);
-			sectionsN = f.metadata.sectionsN;
-			sectionsData = f.sections;
-			width = f.metadata.width;
-			height = f.metadata.height;
-			attributes = [];
-			sketch = decodeSketch(f.sketch);
-			gui();
-		} else {
-			alert("El archivo no es compatible");
-		}
-	});
+	select('#gui').drop(handleFile);
+}
+
+function handleFile(file) {
+	if (file.subtype === 'json' || file.subtype === 'plain') {
+		model = file.subtype === 'json' ? file.data : JSON.parse(file.data);
+		sketch = decodeSketch(model.sketch);
+		gui();
+	} else {
+		alert("El archivo no es compatible");
+	}
 }
 
 function getModel() {
-	const modelData = {
-		metadata: {
-			sectionsN,
-			sectionsNames,
-			attributes,
-			width,
-			height,
-			bg
+	const newData = {
+		grammar: {
+			base: ['']
 		},
-		sections: sectionsData,
 		sketch: btoa(sketch.map(doodle => doodle.toString()).join('**'))
 	};
-	return modelData
+
+	const baseBranches = [];
+	for (let i = 0; i < model.metadata.sectionsN; i++) {baseBranches.push(`<${model.metadata.sectionsNames[i] || i}>`)}
+	newData.grammar.base[0] = baseBranches.join('|');
+	Object.assign(model, newData);
+	return model
 }
 
 function randomSections() {
 	// secciones al azar dentro de los límites del canvas
-	for (let i = 0; i < sectionsN; i++) {
+	const width = model.metadata.width;
+	const height = model.metadata.height;
+	for (let i = 0; i < model.metadata.sectionsN; i++) {
 		const w = floor(random(100, width));
 		const h = floor(random(100, height));
-		sectionsData[i] = {
+		model.sections[i] = {
 			w, h, i,
 			x: floor(min(random(width), width - w)),
 			y: floor(min(random(width), height - h))
@@ -92,8 +102,8 @@ function randomSections() {
 }
 
 function gui() {
-	cnv = createCanvas(width, height).parent('#canvas').style('visibility', 'visible');
-	background(bg);
+	cnv = createCanvas(model.metadata.width, model.metadata.height).parent('#canvas').style('visibility', 'visible');
+	background(model.metadata.bg);
 
 	selectAll('.gui-container').forEach(d => d.remove());
 	selectAll('.new-struct').forEach(d => d.remove());
@@ -103,7 +113,7 @@ function gui() {
 
 	// SECTIONS
 	const sectionsDiv = createDiv('').class('sections-container').parent(guiCont);
-	for (let i = sectionsN - 1; i >= 0; i--) {
+	for (let i = model.metadata.sectionsN - 1; i >= 0; i--) {
 		createButton(i).class('section-btn').parent(sectionsDiv).mouseClicked(function () {
 			drawingSketch = false;
 			select('#overlay').style('cursor', 'default');
@@ -146,7 +156,7 @@ function gui() {
 	createButton(`${iconImg(bombIcon)}`).class('action-btn').parent(emojiBtns).mouseClicked(() => {
 		sketch = [];
 		undoStack = [];
-		background(bg);
+		background(model.metadata.bg);
 	});
 
 	createButton(`${iconImg(downloadIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {
@@ -156,19 +166,19 @@ function gui() {
 		});
 	});
 
-	createButton(`${iconImg(shareIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(function() {
-		sectionNamesPrompt(() => {
-			const model = getModel();
-			const url = `../gramatica/?model=url&data=${btoa(JSON.stringify(model, null, 2))}`;
-			navigator.clipboard.writeText(url);
-			this.html(`${iconImg(clipboardIcon)}`);
-			this.addClass('salient-btn');
-			setTimeout(() => {
-				this.html(`${iconImg(shareIcon)}`);
-				this.removeClass('salient-btn');
-			}, 1000);
-		});
-	});
+	// createButton(`${iconImg(shareIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(function() {
+	// 	sectionNamesPrompt(() => {
+	// 		const model = getModel();
+	// 		const url = `../gramatica/?model=url&data=${btoa(JSON.stringify(model, null, 2))}`;
+	// 		navigator.clipboard.writeText(url);
+	// 		this.html(`${iconImg(clipboardIcon)}`);
+	// 		this.addClass('salient-btn');
+	// 		setTimeout(() => {
+	// 			this.html(`${iconImg(shareIcon)}`);
+	// 			this.removeClass('salient-btn');
+	// 		}, 1000);
+	// 	});
+	// });
 
 	createButton(`${iconImg(continueIcon)}`).class('action-btn').parent(actionsDiv).mouseClicked(() => {
 		sectionNamesPrompt(() => {
@@ -218,7 +228,7 @@ function showSections(i) {
 	selectAll('.non-adjustable-section').forEach(d=>d.remove());
 	selectAll('.adjustable-section').forEach(d=>d.remove());
 
-	for (let j = 0; j < sectionsN; j++) {
+	for (let j = 0; j < model.metadata.sectionsN; j++) {
 		if (j !== i || i === undefined) {
 			showNonAdjustableSection(j);
 		}
@@ -231,6 +241,7 @@ function showSections(i) {
 }
 
 function showNonAdjustableSection(i) {
+	const sectionsData = model.sections;
 	createDiv(i)
 		.class('non-adjustable-section')
 		.style('width', sectionsData[i].w + 'px')
@@ -241,6 +252,7 @@ function showNonAdjustableSection(i) {
 }
 
 function showAdjustableSection(i) {
+	const sectionsData = model.sections;
 	const section = createDiv(i)
 		.class('adjustable-section')
 		.attribute('i', i)
@@ -264,6 +276,9 @@ function updateAdjust() {
 	let fixedY;
 	let movedX;
 	let movedY;
+	const width = model.metadata.width;
+	const height = model.metadata.height;
+	const sectionsData = model.sections;
 
 	const adjustAction = (e) => {
 		const {x, y, w, h} = sectionsData[i];
@@ -281,10 +296,10 @@ function updateAdjust() {
 				let newH = refY - y;
 				newW = newW + x >= width ? width - x : newW;
 				newH = newH + y >= height ? height - y : newH;
-				sectionsData[i].w = newW;
-				sectionsData[i].h = newH;
-				section.style('width', floor(sectionsData[i].w)  + 'px');
-				section.style('height', floor(sectionsData[i].h) + 'px');
+				sectionsData[i].w = floor(newW);
+				sectionsData[i].h = floor(newH);
+				section.style('width', sectionsData[i].w  + 'px');
+				section.style('height', sectionsData[i].h + 'px');
 				if (!mouseIsPressed) {clearInterval(interval)}
 			}, 100);			
 		} else {
@@ -297,10 +312,10 @@ function updateAdjust() {
 				// Mantener nueva posición dentro de los límites del canvas
 				newX = newX < 0 ? 0 : newX > width - w ? width - w : newX;
 				newY = newY < 0 ? 0 : newY > height - h ? height - h : newY;
-				sectionsData[i].x = newX;
-				sectionsData[i].y = newY;
-				section.style('left', floor(sectionsData[i].x) + 'px');
-				section.style('top', floor(sectionsData[i].y) + 'px');
+				sectionsData[i].x = floor(newX);
+				sectionsData[i].y = floor(newY);
+				section.style('left', sectionsData[i].x + 'px');
+				section.style('top', sectionsData[i].y + 'px');
 				if (!mouseIsPressed) {clearInterval(interval)}
 			}, 100);
 		}
@@ -342,7 +357,7 @@ function sectionNamesPrompt(callback) {
 
 	const inputs = [];
 	const attr = [];
-	for (let i = sectionsN - 1; i >= 0; i--) {
+	for (let i = model.metadata.sectionsN - 1; i >= 0; i--) {
 		const cont = createDiv('').class('multiprompt-line').parent(multiPrompt);
 		createSpan(`Sección ${i}:`).parent(cont);
 		inputs[i] = createInput(i).parent(cont).attribute("maxlength", 20);
@@ -362,14 +377,15 @@ function sectionNamesPrompt(callback) {
 		multiPrompt.remove();
 	});
 	createButton('Continuar').class('alert-btn').parent(btnDiv).mouseClicked(async function() {
-		for (let i = 0; i < sectionsN; i++) {
-			sectionsNames[i] = inputs[i].value().replace(" ","_");
-			attributes[i] = attr[i].checked();
+		for (let i = 0; i < model.metadata.sectionsN; i++) {
+			model.metadata.sectionsNames[i] = inputs[i].value().replace(/\s/g,"_").replace(/[<>\#$:|]/g,"");
+			console.log(model.metadata.sectionsNames[i]);
+			model.metadata.attributes[i] = attr[i].checked();
 			if (template) {
-				let {x, y, w, h} = sectionsData[i];
+				let {x, y, w, h} = model.sections[i];
 				const im = get(x, y, w, h);
 				im.resize(im.width * 3, im.height * 3);
-				im.save(`sec_${sectionsNames[i]}`, 'png');
+				im.save(`sec_${model.metadata.sectionsNames[i]}`, 'png');
 				await sleep(300);
 			}
 		};
@@ -377,7 +393,7 @@ function sectionNamesPrompt(callback) {
 			const im = get();
 			im.resize(im.width * 3, im.height * 3);
 			im.save('cnv', 'png');
-			await sleep(300)
+			await sleep(300);
 		}
 		callback();
 		multiPrompt.remove();
