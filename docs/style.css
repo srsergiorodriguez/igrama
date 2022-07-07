@@ -11,6 +11,10 @@
   --font: black;
 }
 
+.title-link {
+  color: var(--font);
+}
+
 * {
   font-family: 'Helvetica', sans-serif;
   box-sizing: border-box;
