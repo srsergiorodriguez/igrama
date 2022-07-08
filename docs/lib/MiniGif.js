@@ -71,9 +71,7 @@ class MiniGif {
   }
 
   makeGif() {
-    console.time("median2");
     const colors = this.customPalette || this.medianCutColors(this.allPixels);
-    console.timeEnd("median2");
     this.globalColorTable = this.getColorTable(colors);
     const codeTableData = this.getCodeTable(colors);
     this.quantizeFunction = this.dither ? this.errorDiffusionDither : this.simpleQuantize;
@@ -395,7 +393,6 @@ class MiniGif {
     const cols = [];  
     let counter = 0;
     const nrRandoms = Math.max(1000,Math.floor(2*pixels.length/1000));
-    console.log(nrRandoms, pixels.length);
     const drops = new Array(nrRandoms).fill(0).map(() => Math.random() > 0.02); // Una secuencia de booleanos aleatorios para no calcular tantas veces
     for (let i = 0; i < pixels.length; i+=4) { // crear el primer bin a partir de los pixels
       if (drops[i%1000]) continue // salta pixels para hacer más pequeña la muestra
@@ -439,12 +436,10 @@ class MiniGif {
         const maxRangeI = stats([stats(channels.r).range, stats(channels.g).range, stats(channels.b).range]).maxI; // index of channel with maxrange
         const sorted = bin.sort((a, b)=> a[maxRangeI] - b[maxRangeI]); // ascendente
         const half = Math.floor(sorted.length/2);
-        // console.time("averaging");
         newBins.push(
           sorted.slice(0, half), // primera mitad
           sorted.slice(half) // segunda mitad
         )
-        // console.timeEnd("averaging");
       }
       return medianCutRecursion(newBins, targetBins);
     }
