@@ -7,7 +7,7 @@ class MiniGif {
   https://github.com/srsergiorodriguez/
   */
   constructor(options = {}) {
-    this.colorResolution = Math.max(1, Math.min(7, options.colorResolution || 2));
+    this.colorResolution = Math.max(1, Math.min(7, options.colorResolution || 7));
     this.colorTableSize = Math.pow(2, this.colorResolution + 1);
     this.colorTableBytes = this.colorTableSize * 3;
     this.customPalette = options.customPalette || undefined;
@@ -25,6 +25,8 @@ class MiniGif {
     this.framesPixels = [];
     this.framesImageData = [];
     this.allPixels = []; // para poner todos los pixels de todas las imágenes y hacer la quantización
+
+    this.distanceMemo = {};
   }
 
   async addFrameFromPath(path) {
@@ -62,8 +64,6 @@ class MiniGif {
     const pixels = imageDataObject.data;
     this.framesPixels.push(pixels);
 
-    this.allPixels = [...this.allPixels, ...pixels];
-
     if (!(frame instanceof HTMLCanvasElement)) {
       canvas.remove();
     }
@@ -71,13 +71,22 @@ class MiniGif {
   }
 
   makeGif() {
+    if (this.framesPixels.length === 0) {console.error('Minigif: there are no images to produce the gif'); return}
+    
+    const nrPixels = this.framesPixels[0].length;
+    this.allPixels = new Uint8Array(this.framesPixels.length * nrPixels);
+    for (let i = 0; i < this.framesPixels.length; i++) {
+      this.allPixels.set(this.framesPixels[i], i * nrPixels);
+    }
+
     const colors = this.customPalette || this.medianCutColors(this.allPixels);
     this.globalColorTable = this.getColorTable(colors);
+    
     const codeTableData = this.getCodeTable(colors);
     this.quantizeFunction = this.dither ? this.errorDiffusionDither : this.simpleQuantize;
 
     for (let i = 0; i < this.framesPixels.length; i++) {
-      const indexStream = this.quantizeFunction(this.framesPixels[i], colors);
+      const indexStream = this.quantizeFunction(this.framesPixels[i], this.globalColorTable);
       const codeStream = this.getCodeStream(indexStream, codeTableData);
       this.framesImageData[i] = this.getImageData(codeStream);
     }
@@ -140,10 +149,12 @@ class MiniGif {
     }
 
     ///////
+    
     addCode(CCindex, minimumCodeSize + 1);
     while (streamStart <= indexStream.length) {
       codeTableDict = JSON.parse(JSON.stringify(resetCodeTableData.codeTableDict));
       let currentCodeSize = minimumCodeSize + 1;
+      let codeLengthLimit = Math.pow(2, currentCodeSize) + 1;
       let codeLengthCounter = EOIindex;
   
       let indexBuffer = indexStream[streamStart];
@@ -155,7 +166,10 @@ class MiniGif {
           indexBuffer = combination;
         } else {
           codeLengthCounter++;
-          if (codeLengthCounter >= Math.pow(2, currentCodeSize) + 1) currentCodeSize++;
+          if (codeLengthCounter >= codeLengthLimit) {
+            currentCodeSize++; 
+            codeLengthLimit = Math.pow(2, currentCodeSize) + 1;
+          }
           const dictValue = codeTableDict[indexBuffer];
           codeTableDict[combination] = codeLengthCounter;
           addCode(dictValue, currentCodeSize);
@@ -327,24 +341,26 @@ class MiniGif {
   errorDiffusionDither(pixels, colors) {
     const errorDiff = [7,3,5,1];
     const nIndexes = [[1,0],[-1, 1],[0, 1],[1, 1]];
-    const calculateError = (c1, c2) => c1.map((d, i) => d - c2[i]);
-
+    const mask = 0b11111000;
     const indexStream = new Uint8Array(pixels.length / 4);
     let cursor = 0;
     for (let index = 0; index < pixels.length; index += 4) {
-      const currentPixel = pixels.slice(index, index + 3);  
+      const currentPixel = [pixels[index + 0] & mask, pixels[index + 1] & mask, pixels[index + 2] & mask];
       const colorIndex = this.findClosest(currentPixel, colors);
-      const closest = colors[colorIndex];
-      const error = calculateError(currentPixel, closest);
+      const colorIndexX3 = colorIndex * 3;
+      const closest = [colors[colorIndexX3 + 0], colors[colorIndexX3+ 1], colors[colorIndexX3 + 2]];
+      const error = this.calculateError(currentPixel, closest);
 
       for (let i = 0; i < 3; i++) { pixels[index + i] = closest[i] }
       
       const x = Math.floor(index % this.width);
       const y = Math.floor(index / this.width);
+      const lim = x === 0 || x >= this.width - 1;
       for (let j = 0; j < nIndexes.length; j++) {
+        if ((lim && j === 1) || (lim && (j === 0 || j === 3))) continue
         const nh = (x + (nIndexes[j][0]) * 4) + ((y + (nIndexes[j][1]) * 4) * this.width);
         for (let i = 0; i < 3; i++) {
-          pixels[nh + i] = pixels[nh + i] + ((error[i] * errorDiff[i]) >> 4);
+          pixels[nh + i] = pixels[nh + i] + ((error * errorDiff[i]) >> 4);
         }
       }
       indexStream[cursor] = colorIndex;
@@ -357,29 +373,47 @@ class MiniGif {
   simpleQuantize(pixels, colors) {
     // returns image data object and index stream of colors in color table
     const indexStream = new Uint8Array(pixels.length / 4);
+    const mask = 0b11110000;
     let cursor = 0;
     for (let index = 0; index < pixels.length; index += 4) {
-      const currentPixel = [pixels[index + 0], pixels[index + 1], pixels[index + 2]];
+      const currentPixel = [pixels[index + 0] & mask, pixels[index + 1] & mask, pixels[index + 2] & mask];
       const colorIndex = this.findClosest(currentPixel, colors);
       indexStream[cursor] = colorIndex;
-      cursor++;     
+      cursor++;
     }
     return indexStream
   }
 
   findClosest(c, colors) {
+    const cs = this.colorCode(c);
+    if (this.distanceMemo[cs] !== undefined) return this.distanceMemo[cs]
+
     let index = 0;
     let minDistance = Number.MAX_VALUE;
-    for (let i = 0; i < colors.length; i++) {
-      const distance = this.euclideanDistance(c, colors[i]);
+    let count = 0;
+    for (let i = 0; i < colors.length; i += 3) {
+      const slice = [colors[i + 0], colors[i + 1], colors[i + 2]];
+      const distance = this.euclideanDistance(c, slice);
       if (distance < minDistance) {
         minDistance = distance;
-        index = i;
+        index = count;
       }
+      count++;
     }
+    this.distanceMemo[cs] = index;
     return index
   }
-  
+
+  colorCode(rgb) {
+    const mask = 0xffffff;
+    const hex = ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]) & mask;
+    return hex
+  }
+
+  calculateError(c1, c2) {
+    return c1[0] - c2[0] +  c1[1] - c2[1] +  c1[2] - c2[2];
+  }
+
   euclideanDistance(c1, c2) {
     const a = c1[0] - c2[0];
     const b = c1[1] - c2[1];
@@ -461,23 +495,6 @@ class MiniGif {
       })
       return {min, max, minI, maxI, range: max-min, avg: Math.floor(sum/arr.length)}
     }
-  }
-
-  // HELPERS
-  getIndex(r, table) {
-    let index = 0;
-    for (let i = 0; i < table.length; i++) {
-      const t = table[i];
-      let isCol = true;
-      for (let j = 0; j < r.length; j++) {
-        if (r[j] !== t[j]) isCol = false;
-      }
-      if (isCol) {
-        index = i;
-        break
-      }
-    }
-    return index
   }
 
   toBin(v, pad = 0) {return (v).toString(2).padStart(pad,'0')}
