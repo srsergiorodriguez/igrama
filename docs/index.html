@@ -3,12 +3,57 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Igrama</title>
-    <script src="../common.js"></script> 
-    <script src="sketch.js"></script>    
+    <title>igrama</title>
     <link href="../style.css" rel="stylesheet">
+    <style>
+      #esquema-container {
+        margin: auto;
+      }
+
+      svg {
+        border: solid 1px;
+        border-radius: 10px;
+      }
+
+      .node-rect {
+        stroke: black;
+        fill: white;
+        cursor: pointer;
+      }
+
+      .node-rect:hover {
+        fill: var(--frame);
+      }
+
+      .node-arrow {
+        stroke: black;
+        stroke-width: 2px;
+      }
+
+      #zip-drop {
+        width: 500px;
+        height: 50px;
+        margin: auto;
+        background: var(--frame);
+        border-radius: 10px;
+        text-align: center;
+        font-size: 12px;
+      }
+    </style>
   </head>
   <body>
+    <div id="esquema-container">
+      <h1>igrama</h1>
+      <svg id="svg"></svg>
+      <div id="zip-drop"><p>Arrastra aquí un zip con un modelo y carpetas de imágenes para unificarlos</p></div>
+    </div>
     <footer></footer>
   </body>
+  <script src="./lib/d3.v7.min.js"></script>
+  <script src="./lib/aventura.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+  <script src="common.js"></script>
+  <script src="./lib/jszip.min.js"></script>
+  <script src="./lib/jszip-utils.min.js"></script>
+  <script src="sketch.js"></script>    
 </html>
