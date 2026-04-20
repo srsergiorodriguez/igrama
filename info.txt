@@ -1,0 +1,1 @@
+npx gh-pages -d dist
