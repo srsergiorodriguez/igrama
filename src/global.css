@@ -1,0 +1,191 @@
+/* src/global.css */
+@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&display=swap');
+
+:root {
+  --font-text: "Inconsolata", monospace;
+  
+  /* Minimalist Palette */
+  --bg-color: #ffffff;
+  --text-color: #000000;
+  --accent-color: #00bfff;
+  
+  --border-main: solid 1px var(--text-color);
+  --border-radius: 0px; 
+}
+
+/* Global Reset */
+body {
+  margin: 0; padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-text);
+  box-sizing: border-box;
+}
+
+*, *:before, *:after { box-sizing: inherit; }
+
+/* --- UNIVERSAL LAYOUT --- */
+.igrama-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.breadcrumbs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  font-weight: bold;
+  font-size: 1.2rem;
+  align-items: center;
+}
+
+.crumb {
+  background: none;
+  border: none;
+  font-family: var(--font-text);
+  font-weight: bold;
+  cursor: pointer;
+  color: #999;
+  padding: 0;
+}
+.crumb:hover { color: var(--accent-color); }
+.crumb-active { color: var(--text-color); pointer-events: none; }
+
+.igrama-layout {
+  display: flex;
+  width: 100%;
+  flex-grow: 1;
+  gap: 0; /* REPAIRED: Removed the 2rem gap */
+  overflow: hidden;
+}
+
+.igrama-workspace {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2rem;
+  overflow: auto;
+  /* background: #f9f9f9; Optional: slight contrast for the workspace */
+}
+
+.igrama-toolbar {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  border-left: var(--border-main);
+  padding: 1.5rem;
+  background: var(--bg-color);
+  overflow-y: auto;
+}
+
+/* --- UNIVERSAL BUTTONS --- */
+.btn {
+  background: var(--bg-color);
+  color: var(--text-color);
+  border: var(--border-main);
+  padding: 0.4rem 0.2rem;
+  font-family: var(--font-text);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Standard hover: Invert to black */
+.btn:hover {
+  background: var(--text-color);
+  color: var(--bg-color);
+}
+
+/* Active State */
+.btn-active {
+  background: var(--text-color);
+  color: var(--bg-color);
+}
+
+/* Continue / Primary Button */
+.btn-primary {
+  background: var(--text-color);
+  color: var(--bg-color);
+  font-size: 1rem;
+  margin-top: auto; /* Pushes to bottom of toolbar */
+}
+
+/* Accent hover for Primary buttons */
+.btn-primary:hover {
+  background: var(--accent-color);
+  color: var(--text-color);
+  border-color: var(--text-color);
+}
+
+.btn-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 0.5rem;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+input, select {
+  padding: 0.4rem;
+  font-family: var(--font-text);
+  border: var(--border-main);
+  background: var(--bg-color);
+  color: var(--text-color);
+}
+
+/* --- UNIVERSAL CANVAS & SECTIONS --- */
+.canvas-container {
+  position: relative;
+  border: var(--border-main);
+  box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}
+
+canvas {
+  position: absolute;
+  top: 0; left: 0;
+  touch-action: none;
+}
+
+.section-box {
+  position: absolute;
+  border: dashed 2px var(--text-color);
+  box-sizing: border-box;
+  touch-action: none;
+}
+
+.section-box-active {
+  border-color: var(--accent-color);
+  z-index: 10;
+}
+
+.section-label {
+  position: absolute;
+  top: -24px;
+  left: -2px;
+  background: var(--text-color);
+  color: var(--bg-color);
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.resize-handle {
+  position: absolute;
+  right: -6px; bottom: -6px;
+  width: 12px; height: 12px;
+  background: var(--text-color);
+  cursor: se-resize;
+}
+
+.section-box:hover .resize-handle {
+  background: var(--accent-color);
+}
