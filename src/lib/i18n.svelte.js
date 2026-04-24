@@ -1,6 +1,4 @@
 // src/lib/i18n.svelte.js
-// @ts-nocheck
-
 const dict = {
   en: {
     hub_title: "igrama",
@@ -117,7 +115,7 @@ const dict = {
 };
 
 export const i18n = $state({
-  lang: 'en',
+  lang: 'es',
   t: (key) => {
     if (dict[i18n.lang] && dict[i18n.lang][key]) return dict[i18n.lang][key];
     return key;

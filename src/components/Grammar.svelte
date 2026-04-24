@@ -167,92 +167,96 @@
   </section>
 
   <aside class="igrama-toolbar">
-    <h3 style="margin:0;">{i18n.t('nav_gram')}</h3>
+    <header class="toolbar-header">
+      <h3>{i18n.t('nav_gram')}</h3>
+    </header>
     
-    <div class="control-group">
-      <label>{i18n.t('active_section')}</label>
-      <select style="width: 100%; font-weight: bold;" bind:value={activeSectionIdx} onchange={() => { currentLayer = []; redrawCanvas(); }}>
-        {#each igramaState.model.metadata.sectionsNames as name, i}
-          <option value={i}>{name}</option>
-        {/each}
-      </select>
-    </div>
-
-    <hr/>
-
-    <div class="control-group">
-      <label>{i18n.t('label_color')}</label>
-      <div class="btn-group">
-        <button 
-          class="color-btn {currentColor === 'black' ? 'color-active' : ''}" 
-          style="background: #000000;" 
-          onclick={() => currentColor = 'black'}
-          aria-label="black"
-        ></button>
-        <button 
-          class="color-btn {currentColor === 'white' ? 'color-active' : ''}" 
-          style="background: #ffffff;" 
-          onclick={() => currentColor = 'white'}
-          aria-label="white"
-        ></button>
-        <button 
-          class="color-btn {currentColor === 'accent' ? 'color-active' : ''}" 
-          style="background: {igramaState.model.metadata.accentColor};" 
-          onclick={() => currentColor = 'accent'}
-          aria-label="accent"
-        ></button>
+    <div class="toolbar-content">
+      <div class="control-group">
+        <label>{i18n.t('active_section')}</label>
+        <select style="width: 100%; font-weight: bold;" bind:value={activeSectionIdx} onchange={() => { currentLayer = []; redrawCanvas(); }}>
+          {#each igramaState.model.metadata.sectionsNames as name, i}
+            <option value={i}>{name}</option>
+          {/each}
+        </select>
       </div>
-    </div>
 
-    <div class="control-group">
-      <label>{i18n.t('label_style')}</label>
-      <div class="btn-group">
-        <button class="btn {currentStyle === 'solid' ? 'btn-active' : ''}" onclick={() => currentStyle = 'solid'}>{i18n.t('val_solid')}</button>
-        <button class="btn {currentStyle === 'dither' ? 'btn-active' : ''}" onclick={() => currentStyle = 'dither'}>{i18n.t('val_dither')}</button>
-      </div>
-    </div>
-
-    <div class="control-group">
-      <label>{i18n.t('label_mode')}</label>
-      <div class="btn-group">
-        <button class="btn {currentMode === 'stroke' ? 'btn-active' : ''}" onclick={() => currentMode = 'stroke'}>{i18n.t('val_stroke')}</button>
-        <button class="btn {currentMode === 'fill' ? 'btn-active' : ''}" onclick={() => currentMode = 'fill'}>{i18n.t('val_fill')}</button>
-      </div>
-    </div>
-
-    {#if currentMode === 'stroke'}
-      <div class="control-group" style="margin-top: 0.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; min-height: 50px;">
-          <label style="margin: 0;">{i18n.t('label_weight')} ({currentWeight}px)</label>
-          <div style="
-            width: {currentWeight}px; 
-            height: {currentWeight}px; 
-            border-radius: 50%; 
-            background: {resolveColor(currentColor)}; 
-            border: 1px solid var(--text-color);
-            transition: all 0.1s ease;
-          "></div>
+      <div class="control-group">
+        <label>{i18n.t('label_color')}</label>
+        <div class="btn-group">
+          <button 
+            class="color-btn {currentColor === 'black' ? 'color-active' : ''}" 
+            style="background: #000000;" 
+            onclick={() => currentColor = 'black'}
+            aria-label="black"
+          ></button>
+          <button 
+            class="color-btn {currentColor === 'white' ? 'color-active' : ''}" 
+            style="background: #ffffff;" 
+            onclick={() => currentColor = 'white'}
+            aria-label="white"
+          ></button>
+          <button 
+            class="color-btn {currentColor === 'accent' ? 'color-active' : ''}" 
+            style="background: {igramaState.model.metadata.accentColor};" 
+            onclick={() => currentColor = 'accent'}
+            aria-label="accent"
+          ></button>
         </div>
-        <input type="range" min="1" max="50" bind:value={currentWeight} style="width: 100%" />
       </div>
-    {/if}
 
-    <div class="btn-group">
-      <button class="btn" onclick={() => { if(currentLayer.length>0) { undoStack.push(currentLayer.pop()); redrawCanvas(); }}}>{i18n.t('btn_undo')}</button>
-      <button class="btn" onclick={() => { if(undoStack.length>0) { currentLayer.push(undoStack.pop()); redrawCanvas(); }}}>{i18n.t('btn_redo')}</button>
-      <button class="btn" onclick={() => { currentLayer = []; undoStack = []; redrawCanvas(); }}>{i18n.t('btn_clear')}</button>
+      <div class="control-group">
+        <label>{i18n.t('label_style')}</label>
+        <div class="btn-group">
+          <button class="btn {currentStyle === 'solid' ? 'btn-active' : ''}" onclick={() => currentStyle = 'solid'}>{i18n.t('val_solid')}</button>
+          <button class="btn {currentStyle === 'dither' ? 'btn-active' : ''}" onclick={() => currentStyle = 'dither'}>{i18n.t('val_dither')}</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>{i18n.t('label_mode')}</label>
+        <div class="btn-group">
+          <button class="btn {currentMode === 'stroke' ? 'btn-active' : ''}" onclick={() => currentMode = 'stroke'}>{i18n.t('val_stroke')}</button>
+          <button class="btn {currentMode === 'fill' ? 'btn-active' : ''}" onclick={() => currentMode = 'fill'}>{i18n.t('val_fill')}</button>
+        </div>
+      </div>
+
+      {#if currentMode === 'stroke'}
+        <div class="control-group" style="margin-top: 0.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; min-height: 50px;">
+            <label style="margin: 0;">{i18n.t('label_weight')} ({currentWeight}px)</label>
+            <div style="
+              width: {currentWeight}px; 
+              height: {currentWeight}px; 
+              border-radius: 50%; 
+              background: {resolveColor(currentColor)}; 
+              border: 1px solid var(--text-color);
+              transition: all 0.1s ease;
+            "></div>
+          </div>
+          <input type="range" min="1" max="50" bind:value={currentWeight} style="width: 100%" />
+        </div>
+      {/if}
+
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick={() => { if(currentLayer.length>0) { undoStack.push(currentLayer.pop()); redrawCanvas(); }}}>{i18n.t('btn_undo')}</button>
+        <button class="btn btn-secondary" onclick={() => { if(undoStack.length>0) { currentLayer.push(undoStack.pop()); redrawCanvas(); }}}>{i18n.t('btn_redo')}</button>
+        <button class="btn btn-secondary" onclick={() => { currentLayer = []; undoStack = []; redrawCanvas(); }}>{i18n.t('btn_clear')}</button>
+      </div>
+
+      <div class="control-group" style="margin-top: 0.5rem;">
+        <label>{i18n.t('attr_optional')} <input type="text" style="width:100%" bind:value={attributeInput} /></label>
+        <button class="btn save-option-btn w-full" onclick={saveOptionToGrammar}>{i18n.t('btn_save_option')}</button>
+      </div>
+      
+      <div style="font-size: 0.8rem; text-align: center;">
+        {i18n.t('options_saved')} <strong>{igramaState.model.grammar[activeSectionName]?.length || 0}</strong>
+      </div>
     </div>
 
-    <div class="control-group" style="margin-top: 0.5rem;">
-      <label>{i18n.t('attr_optional')} <input type="text" style="width:100%" bind:value={attributeInput} /></label>
-      <button class="btn save-option-btn" onclick={saveOptionToGrammar}>{i18n.t('btn_save_option')}</button>
-    </div>
-    
-    <div style="font-size: 0.8rem; text-align: center;">
-      {i18n.t('options_saved')} <strong>{igramaState.model.grammar[activeSectionName]?.length || 0}</strong>
-    </div>
-
-    <button class="btn btn-primary" onclick={() => igramaState.step = 'generator'}>{i18n.t('btn_generate')}</button>
+    <footer class="toolbar-footer">
+      <button class="btn btn-primary w-full" onclick={() => igramaState.step = 'generator'}>{i18n.t('btn_generate')}</button>
+    </footer>
   </aside>
 </div>
 

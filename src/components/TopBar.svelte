@@ -1,6 +1,6 @@
 <script>
   import { igramaState } from '../igrama.svelte.js';
-  import { i18n, toggleLanguage } from '../lib/i18n.svelte.js';
+  import { i18n } from '../lib/i18n.svelte.js';
 </script>
 
 <header class="topbar">
@@ -13,9 +13,10 @@
     {/if}
   </nav>
   
-  <button class="lang-btn" onclick={toggleLanguage}>
-    {i18n.lang === 'en' ? 'ES' : 'EN'}
-  </button>
+  <div class="lang-toggle" style="display: flex; gap: 0.5rem;">
+    <button class="btn lang-btn {i18n.lang === 'en' ? 'active' : ''}" onclick={() => i18n.lang = 'en'}>en</button>
+    <button class="btn lang-btn {i18n.lang === 'es' ? 'active' : ''}" onclick={() => i18n.lang = 'es'}>es</button>
+  </div>
 </header>
 
 <style>
@@ -31,18 +32,23 @@
   }
 
   .lang-btn {
-    background: var(--text-color);
-    color: var(--bg-color);
-    border: none;
-    padding: 0.4rem 0.8rem;
-    font-family: var(--font-text);
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    padding: 0.1rem 0.4rem;
+    background: var(--bg-color);
+    color: var(--text-color);
   }
 
   .lang-btn:hover {
+    background: var(--text-color);
+    color: var(--bg-color);
+  }
+
+  .lang-btn.active {
     background: var(--accent-color);
     color: var(--text-color);
+    border-color: var(--text-color);
+  }
+
+  .lang-btn.active:hover {
+    background: var(--bg-color);
   }
 </style>

@@ -173,60 +173,66 @@
   </section>
 
   <aside class="igrama-toolbar">
-    <h3 style="margin:0;">{i18n.t('nav_struct')}</h3>
+    <header class="toolbar-header">
+      <h3>{i18n.t('nav_struct')}</h3>
+    </header>
     
-    <div class="btn-group">
-      <button class="btn {mode === 'sketch' ? 'btn-active' : ''}" onclick={() => mode = 'sketch'}>{i18n.t('mode_guide')}</button>
-      <button class="btn {mode === 'sections' ? 'btn-active' : ''}" onclick={() => mode = 'sections'}>{i18n.t('mode_sections')}</button>
-    </div>
-
-    <div class="control-group">
-      <label>{i18n.t('accent_color')}
-        <div style="display: flex; gap: 0.5rem; margin-top: 0.2rem;">
-          <input type="color" bind:value={igramaState.model.metadata.accentColor} oninput={redrawCanvas} style="padding: 0; width: 40px; height: 30px;" />
-          <input type="text" bind:value={igramaState.model.metadata.accentColor} oninput={redrawCanvas} style="flex-grow: 1;" />
-        </div>
-      </label>
-    </div>
-
-    <div class="control-group">
-      <label>{i18n.t('label_width')} <input type="number" style="width: 100%" value={igramaState.model.metadata.width} oninput={(e) => updateDimensions(+e.target.value, igramaState.model.metadata.height)} /></label>
-    </div>
-    
-    <div class="control-group">
-      <label>{i18n.t('label_height')} <input type="number" style="width: 100%" value={igramaState.model.metadata.height} oninput={(e) => updateDimensions(igramaState.model.metadata.width, +e.target.value)} /></label>
-    </div>
-    
-    <div class="control-group">
-      <label>{i18n.t('label_sections')}
-        <select style="width: 100%" onchange={(e) => generateRandomSections(+e.target.value)}>
-          <option value="0">{i18n.t('select_prompt')}</option>
-          {#each [1,2,3,4,5,6,7,8] as n} <option value={n}>{n}</option> {/each}
-        </select>
-      </label>
-    </div>
-
-    {#if mode === 'sketch'}
+    <div class="toolbar-content">
       <div class="btn-group">
-        <button class="btn" onclick={() => { if(igramaState.model.sketch.length>0) { undoStack.push(igramaState.model.sketch.pop()); redrawCanvas(); } }}>{i18n.t('btn_undo')}</button>
-        <button class="btn" onclick={() => { if(undoStack.length>0) { igramaState.model.sketch.push(undoStack.pop()); redrawCanvas(); } }}>{i18n.t('btn_redo')}</button>
-        <button class="btn" onclick={() => { igramaState.model.sketch = []; undoStack = []; redrawCanvas(); }}>{i18n.t('btn_clear')}</button>
+        <button class="btn btn-secondary {mode === 'sketch' ? 'btn-active' : ''}" onclick={() => mode = 'sketch'}>{i18n.t('mode_guide')}</button>
+        <button class="btn btn-secondary {mode === 'sections' ? 'btn-active' : ''}" onclick={() => mode = 'sections'}>{i18n.t('mode_sections')}</button>
       </div>
-    {/if}
 
-    {#if igramaState.model.sections.length > 0}
       <div class="control-group">
-        <label style="font-weight: bold; margin-top: 0.5rem;">{i18n.t('section_names')}</label>
-        {#each igramaState.model.sections as sec, i}
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="font-size: 0.8rem; width: 20px;">{i}:</span>
-            <input type="text" style="flex-grow: 1;" bind:value={igramaState.model.metadata.sectionsNames[i]} />
+        <label>{i18n.t('accent_color')}
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.2rem;">
+            <input type="color" bind:value={igramaState.model.metadata.accentColor} oninput={redrawCanvas} style="padding: 0; width: 40px; height: 30px;" />
+            <input type="text" bind:value={igramaState.model.metadata.accentColor} oninput={redrawCanvas} style="flex-grow: 1;" />
           </div>
-        {/each}
+        </label>
       </div>
-    {/if}
 
-    <button class="btn" onclick={downloadStructure}>{i18n.t('btn_download_json')}</button>
-    <button class="btn btn-primary" onclick={goToGrammar}>{i18n.t('btn_continue')}</button>
+      <div class="control-group">
+        <label>{i18n.t('label_width')} <input type="number" style="width: 100%" value={igramaState.model.metadata.width} oninput={(e) => updateDimensions(+e.target.value, igramaState.model.metadata.height)} /></label>
+      </div>
+      
+      <div class="control-group">
+        <label>{i18n.t('label_height')} <input type="number" style="width: 100%" value={igramaState.model.metadata.height} oninput={(e) => updateDimensions(igramaState.model.metadata.width, +e.target.value)} /></label>
+      </div>
+      
+      <div class="control-group">
+        <label>{i18n.t('label_sections')}
+          <select style="width: 100%" onchange={(e) => generateRandomSections(+e.target.value)}>
+            <option value="0">{i18n.t('select_prompt')}</option>
+            {#each [1,2,3,4,5,6,7,8] as n} <option value={n}>{n}</option> {/each}
+          </select>
+        </label>
+      </div>
+
+      {#if mode === 'sketch'}
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick={() => { if(igramaState.model.sketch.length>0) { undoStack.push(igramaState.model.sketch.pop()); redrawCanvas(); } }}>{i18n.t('btn_undo')}</button>
+          <button class="btn btn-secondary" onclick={() => { if(undoStack.length>0) { igramaState.model.sketch.push(undoStack.pop()); redrawCanvas(); } }}>{i18n.t('btn_redo')}</button>
+          <button class="btn btn-secondary" onclick={() => { igramaState.model.sketch = []; undoStack = []; redrawCanvas(); }}>{i18n.t('btn_clear')}</button>
+        </div>
+      {/if}
+
+      {#if igramaState.model.sections.length > 0}
+        <div class="control-group">
+          <label style="font-weight: bold; margin-top: 0.5rem;">{i18n.t('section_names')}</label>
+          {#each igramaState.model.sections as sec, i}
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="font-size: 0.8rem; width: 20px;">{i}:</span>
+              <input type="text" style="flex-grow: 1;" bind:value={igramaState.model.metadata.sectionsNames[i]} />
+            </div>
+          {/each}
+        </div>
+      {/if}
+    </div>
+
+    <footer class="toolbar-footer">
+      <button class="btn btn-secondary w-full" onclick={downloadStructure}>{i18n.t('btn_download_json')}</button>
+      <button class="btn btn-primary w-full" onclick={goToGrammar}>{i18n.t('btn_continue')}</button>
+    </footer>
   </aside>
 </div>

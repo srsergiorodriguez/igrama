@@ -68,26 +68,27 @@
   </section>
 
   <aside class="igrama-toolbar">
-    <h3 style="margin:0;">{i18n.t('nav_gen')}</h3>
+    <header class="toolbar-header">
+      <h3>{i18n.t('nav_gen')}</h3>
+    </header>
     
-    <div class="control-group">
-      <button class="btn btn-primary" onclick={generate}>{i18n.t('btn_generate_another')}</button>
+    <div class="toolbar-content">
+      <div class="control-group">
+        <button class="btn btn-primary w-full" onclick={generate}>{i18n.t('btn_generate_another')}</button>
+      </div>
+
+      <div class="control-group">
+        <button class="btn btn-secondary w-full {format === 'gif' ? 'btn-active' : ''}" onclick={toggleWiggle}>
+          {format === 'gif' ? i18n.t('btn_disable_wiggle') : i18n.t('btn_enable_wiggle')}
+        </button>
+      </div>
     </div>
 
-    <hr/>
-
-    <div class="control-group">
-      <button class="btn {format === 'gif' ? 'btn-active' : ''}" onclick={toggleWiggle}>
-        {format === 'gif' ? i18n.t('btn_disable_wiggle') : i18n.t('btn_enable_wiggle')}
-      </button>
-    </div>
-
-    <div class="control-group" style="margin-top: 1rem;">
-      <button class="btn" onclick={downloadImage}>{i18n.t('btn_download_image')}</button>
-      <button class="btn" onclick={downloadJSON}>{i18n.t('btn_download_json')}</button>
-    </div>
-
-    <button class="btn btn-primary" onclick={goBack} style="margin-top: auto;">{i18n.t('btn_back_grammar')}</button>
+    <footer class="toolbar-footer">
+      <button class="btn btn-secondary w-full" onclick={downloadImage}>{i18n.t('btn_download_image')}</button>
+      <button class="btn btn-secondary w-full" onclick={downloadJSON}>{i18n.t('btn_download_json')}</button>
+      <button class="btn btn-primary w-full" onclick={goBack}>{i18n.t('btn_back_grammar')}</button>
+    </footer>
   </aside>
 
 </div>

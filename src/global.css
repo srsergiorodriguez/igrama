@@ -71,16 +71,48 @@ body {
   /* background: #f9f9f9; Optional: slight contrast for the workspace */
 }
 
+/* --- UNIVERSAL SIDEBAR SYSTEM --- */
 .igrama-toolbar {
   width: 300px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
   border-left: var(--border-main);
-  padding: 1.5rem;
   background: var(--bg-color);
+  z-index: 5;
+  /* Removed padding and overflow so the child elements handle it */
+}
+
+.toolbar-header {
+  padding: 1.5rem;
+  border-bottom: var(--border-main);
+  background: var(--text-color);
+  color: var(--bg-color);
+}
+
+.toolbar-header h2, 
+.toolbar-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.toolbar-content {
+  flex-grow: 1;
   overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem; /* Handles the vertical spacing between control groups */
+}
+
+.toolbar-footer {
+  padding: 1rem;
+  background: var(--text-color);
+  border-top: var(--border-main);
+  color: var(--bg-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* Stacks the I/O and Continue buttons neatly */
 }
 
 /* --- UNIVERSAL BUTTONS --- */
