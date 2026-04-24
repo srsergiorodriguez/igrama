@@ -9,7 +9,7 @@
   --text-color: #000000;
   --accent-color: #00bfff;
   
-  --border-main: solid 1px var(--text-color);
+  --border-main: solid 2px var(--text-color);
   --border-radius: 0px; 
 }
 
@@ -36,7 +36,7 @@ body {
   gap: 0.5rem;
   padding: 1rem 2rem;
   font-weight: bold;
-  font-size: 1.2rem;
+  font-size: 1rem;
   align-items: center;
 }
 
@@ -48,6 +48,7 @@ body {
   cursor: pointer;
   color: #999;
   padding: 0;
+  font-size: 1rem;
 }
 .crumb:hover { color: var(--accent-color); }
 .crumb-active { color: var(--text-color); pointer-events: none; }

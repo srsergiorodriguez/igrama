@@ -3,8 +3,6 @@
   import { simplifyLine, getPattern } from '../lib/helpers.js';
   import { i18n } from '../lib/i18n.svelte.js';
 
-  console.log(igramaState);
-
   let canvasRef = $state();
   let ctx = $state();
   
@@ -43,10 +41,6 @@
     if (semanticColor === 'white') return '#ffffff';
     if (semanticColor === 'black') return '#000000';
     if (semanticColor === 'accent') return igramaState.model.metadata.accentColor;
-
-    
-    // SAFETY NET: If it's an old drawing with a hex code (like #ff00ff), 
-    // just return the hex code instead of defaulting to black!
     return semanticColor; 
   }
 
@@ -56,7 +50,7 @@
     if (x >= activeSection.x && x <= activeSection.x + activeSection.w && y >= activeSection.y && y <= activeSection.y + activeSection.h) {
       isDrawing = true;
       currentDoodle = { 
-        color: currentColor, // Saving the WORD, not the hex!
+        color: currentColor,
         weight: currentWeight, 
         style: currentStyle,
         type: currentMode,
@@ -189,15 +183,24 @@
     <div class="control-group">
       <label>{i18n.t('label_color')}</label>
       <div class="btn-group">
-        <button class="btn {currentColor === 'black' ? 'btn-active' : ''}" onclick={() => currentColor = 'black'}>
-          <span style="display:inline-block; width:10px; height:10px; background:#000000; border:1px solid #ccc;"></span>
-        </button>
-        <button class="btn {currentColor === 'white' ? 'btn-active' : ''}" onclick={() => currentColor = 'white'}>
-          <span style="display:inline-block; width:10px; height:10px; background:#ffffff; border:1px solid #000;"></span>
-        </button>
-        <button class="btn {currentColor === 'accent' ? 'btn-active' : ''}" onclick={() => currentColor = 'accent'}>
-          <span style="display:inline-block; width:10px; height:10px; background:{igramaState.model.metadata.accentColor}; border:1px solid #000;"></span>
-        </button>
+        <button 
+          class="color-btn {currentColor === 'black' ? 'color-active' : ''}" 
+          style="background: #000000;" 
+          onclick={() => currentColor = 'black'}
+          aria-label="black"
+        ></button>
+        <button 
+          class="color-btn {currentColor === 'white' ? 'color-active' : ''}" 
+          style="background: #ffffff;" 
+          onclick={() => currentColor = 'white'}
+          aria-label="white"
+        ></button>
+        <button 
+          class="color-btn {currentColor === 'accent' ? 'color-active' : ''}" 
+          style="background: {igramaState.model.metadata.accentColor};" 
+          onclick={() => currentColor = 'accent'}
+          aria-label="accent"
+        ></button>
       </div>
     </div>
 
@@ -219,7 +222,17 @@
 
     {#if currentMode === 'stroke'}
       <div class="control-group" style="margin-top: 0.5rem;">
-        <label>{i18n.t('label_weight')} ({currentWeight}px)</label>
+        <div style="display: flex; justify-content: space-between; align-items: center; min-height: 50px;">
+          <label style="margin: 0;">{i18n.t('label_weight')} ({currentWeight}px)</label>
+          <div style="
+            width: {currentWeight}px; 
+            height: {currentWeight}px; 
+            border-radius: 50%; 
+            background: {resolveColor(currentColor)}; 
+            border: 1px solid var(--text-color);
+            transition: all 0.1s ease;
+          "></div>
+        </div>
         <input type="range" min="1" max="50" bind:value={currentWeight} style="width: 100%" />
       </div>
     {/if}
@@ -246,5 +259,23 @@
 <style>
   .save-option-btn {
     background: var(--accent-color);
+  }
+
+  /* Solid Color Buttons */
+  .color-btn {
+    height: 35px;
+    border: var(--border-main);
+    cursor: pointer;
+    border-radius: 0;
+    padding: 0;
+    transition: transform 0.1s ease;
+  }
+  .color-btn:hover {
+    transform: scale(1.05);
+  }
+  .color-active {
+    outline: 3px solid var(--accent-color);
+    outline-offset: 2px;
+    z-index: 2; /* Ensures the outline sits above neighboring buttons */
   }
 </style>
